@@ -1,7 +1,19 @@
 hystrix-py
 ==========
 
-A netflix hystrix implementation in Python.
+A Netflix Hystrix implementation in Python.
+
+What is Hystrix?
+----------------
+
+See the [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki)
+Wiki documentation.
+
+How it works
+------------
+
+See the [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki/How-it-Works)
+Wiki documentation.
 
 Features
 --------
