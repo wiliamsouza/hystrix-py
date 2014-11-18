@@ -1,32 +1,117 @@
 from hystrix.command import Command
 
+import pytest
+
 
 class HelloCommand(Command):
     def run(self):
-        return 'Hello Test'
+        return 'Hello Run'
 
 
-class FailureCommand(Command):
+class FallbackCommand(Command):
     def run(self):
         raise RuntimeError('This command always fails')
-        return 'Hello Test'
+        return 'Hello Run'
 
     def fallback(self):
-        return 'Hello World'
+        return 'Hello Fallback'
+
+
+class CacheCommand(Command):
+    def run(self):
+        raise RuntimeError('This command always fails')
+        return 'Hello Run'
+
+    def fallback(self):
+        raise RuntimeError('This command always fails')
+        return 'Hello Fallback'
+
+    def cache(self):
+        return 'Hello Cache'
+
+
+def test_not_implemented_error():
+    class NotImplementedCommand(Command):
+        pass
+
+    command = NotImplementedCommand()
+
+    with pytest.raises(RuntimeError):
+        command.run()
+
+    with pytest.raises(RuntimeError):
+        command.fallback()
+
+    with pytest.raises(RuntimeError):
+        command.cache()
 
 
 def test_default_groupname():
-    class TestCommand(Command):
+    class RunCommand(Command):
         pass
 
-    command = TestCommand()
-    assert command.group_name == 'TestCommandGroup'
+    command = RunCommand()
+    assert command.group_name == 'RunCommandGroup'
 
 
 def test_manual_groupname():
-    class TestCommand(Command):
-        __groupname__ = 'MyTestGroup'
+    class RunCommand(Command):
+        __groupname__ = 'MyRunGroup'
         pass
 
-    command = TestCommand()
-    assert command.group_name == 'MyTestGroup'
+    command = RunCommand()
+    assert command.group_name == 'MyRunGroup'
+
+
+def test_command_hello_synchronous():
+    command = HelloCommand()
+    result = command.execute()
+    assert 'Hello Run' == result
+
+
+def test_command_hello_asynchronous():
+    command = HelloCommand()
+    future = command.queue()
+    assert 'Hello Run' == future.result()
+
+
+def test_command_hello_callback():
+    command = HelloCommand()
+    future = command.observe()
+    assert 'Hello Run' == future.result()
+
+
+def test_command_hello_fallback_synchronous():
+    command = FallbackCommand()
+    result = command.execute()
+    assert 'Hello Fallback' == result
+
+
+def test_command_hello_fallback_asynchronous():
+    command = FallbackCommand()
+    future = command.queue()
+    assert 'Hello Fallback' == future.result()
+
+
+def test_command_hello_fallback_callback():
+    command = FallbackCommand()
+    future = command.observe()
+    assert 'Hello Fallback' == future.result()
+
+
+def test_command_hello_cache_synchronous():
+    command = CacheCommand()
+    result = command.execute()
+    assert 'Hello Cache' == result
+
+
+def test_command_hello_cache_asynchronous():
+    command = CacheCommand()
+    future = command.queue()
+    assert 'Hello Cache' == future.result()
+
+
+def test_command_hello_cache_callback():
+    command = CacheCommand()
+    future = command.observe()
+    assert 'Hello Cache' == future.result()

@@ -39,22 +39,54 @@ class Command(six.with_metaclass(CommandMetaclass, object)):
     def fallback(self):
         raise NotImplementedError('Subclasses must implement this method.')
 
+    def cache(self):
+        raise NotImplementedError('Subclasses must implement this method.')
+
     def execute(self, timeout=None):
         timeout = timeout or self.timeout
         future = self.group.executor.submit(self.run)
         try:
-            future.result(timeout)
+            return future.result(timeout)
         except Exception:
             log.exception('exception calling run for {}'.format(self))
             log.info('run raises {}'.format(future.exception))
             try:
                 log.info('trying fallback for {}'.format(self))
-                self.fallback()
+                future = self.group.executor.submit(self.fallback)
+                return future.result(timeout)
             except Exception:
                 log.exception('exception calling fallback for {}'.format(self))
+                log.info('run() raised {}'.format(future.exception))
+                log.info('trying cache for {}'.format(self))
+                future = self.group.executor.submit(self.cache)
+                return future.result(timeout)
 
-    def observe(self):
-        return self.group.executor.submit(self.run)
+    def observe(self, timeout=None):
+        timeout = timeout or self.timeout
+        return self.__async(timeout=timeout)
 
-    def queue(self):
-        return self.group.executor.submit(self.run)
+    def queue(self, timeout=None):
+        timeout = timeout or self.timeout
+        return self.__async(timeout=timeout)
+
+    def __async(self, timeout=None):
+        timeout = timeout or self.timeout
+        future = self.group.executor.submit(self.run)
+        try:
+            # Call result() to check for exception
+            future.result(timeout)
+            return future
+        except Exception:
+            log.exception('exception calling run for {}'.format(self))
+            log.info('run raised {}'.format(future.exception))
+            try:
+                log.info('trying fallback for {}'.format(self))
+                future = self.group.executor.submit(self.fallback)
+                # Call result() to check for exception
+                future.result(timeout)
+                return future
+            except Exception:
+                log.exception('exception calling fallback for {}'.format(self))
+                log.info('fallback raised {}'.format(future.exception))
+                log.info('trying cache for {}'.format(self))
+                return self.group.executor.submit(self.cache)
