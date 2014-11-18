@@ -6,14 +6,15 @@ A Netflix Hystrix implementation in Python.
 What is Hystrix?
 ----------------
 
-See the [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki)
-Wiki documentation.
+For more information see the [Netflix Hystrix]
+(https://github.com/Netflix/Hystrix/wiki) Wiki documentation.
 
 How it works
 ------------
 
-See the [Netflix Hystrix](https://github.com/Netflix/Hystrix/wiki/How-it-Works)
-Wiki documentation.
+To know more see the [Netflix Hystrix]
+(https://github.com/Netflix/Hystrix/wiki/How-it-Works) Wiki How it works
+section documentation.
 
 Features
 --------
