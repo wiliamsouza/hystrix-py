@@ -52,7 +52,7 @@ setup(
     install_requires=['six'],
     extras_require={
         'dev': ['pyflakes', 'pep8', 'pylint', 'check-manifest'],
-        'test': ['pytest', 'pytest-cov', 'coverage'],
+        'test': ['pytest', 'pytest-cov'],
     },
     cmdclass={'test': PyTest},
 )
