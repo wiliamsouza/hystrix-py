@@ -1,11 +1,5 @@
 tox
 pytest
 pytest-cov
-coverage
-
-pyflakes
-pep8
-pylint
-check-manifest
-ipython
-ipdb
+pytest-cache
+pytest-timeout
