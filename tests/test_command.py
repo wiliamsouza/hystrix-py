@@ -56,7 +56,7 @@ def test_default_groupname():
 
 def test_manual_groupname():
     class RunCommand(Command):
-        __groupname__ = 'MyRunGroup'
+        __group_name__ = 'MyRunGroup'
         pass
 
     command = RunCommand()

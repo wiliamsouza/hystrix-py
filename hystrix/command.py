@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 import logging
 
 import six
@@ -18,8 +18,8 @@ class CommandMetaclass(type):
         if name in cls.__blacklist:
             return new_class
 
-        group_name = attrs.get('__groupname__', '{}Group'.format(name))
-        NewGroup = type(group_name, (Group,), dict(__groupname__=group_name))
+        group_name = attrs.get('__group_name__', '{}Group'.format(name))
+        NewGroup = type(group_name, (Group,), dict(__group_name__=group_name))
         setattr(new_class, 'group', NewGroup())
         setattr(new_class, 'group_name', group_name)
 
@@ -28,7 +28,7 @@ class CommandMetaclass(type):
 
 class Command(six.with_metaclass(CommandMetaclass, object)):
 
-    __groupname__ = None
+    __group_name__ = None
 
     def __init__(self, timeout=None):
         self.timeout = timeout

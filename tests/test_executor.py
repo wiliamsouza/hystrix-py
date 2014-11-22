@@ -11,7 +11,7 @@ def test_default_executorname():
 
 def test_manual_executorname():
     class Test(Executor):
-        __executorname__ = 'MyTestExecutor'
+        __executor_name__ = 'MyTestExecutor'
         pass
 
     executor = Test()

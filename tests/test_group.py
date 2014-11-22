@@ -11,7 +11,7 @@ def test_default_groupname():
 
 def test_manual_groupname():
     class Test(Group):
-        __groupname__ = 'MyTestGroup'
+        __group_name__ = 'MyTestGroup'
         pass
 
     group = Test()

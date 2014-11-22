@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 import logging
 
 import six
@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class GroupMetaclass(type):
 
-    __groups = dict()
+    __instances__ = dict()
     __blacklist = ('Group', 'GroupMetaclass')
 
     def __new__(cls, name, bases, attrs):
@@ -18,25 +18,25 @@ class GroupMetaclass(type):
         if name in cls.__blacklist:
             return super(GroupMetaclass, cls).__new__(cls, name, bases, attrs)
 
-        classname = attrs.get('__groupname__', '{}Group'.format(name))
+        classname = attrs.get('__group_name__', '{}Group'.format(name))
         new_class = super(GroupMetaclass, cls).__new__(cls, classname,
                                                        bases, attrs)
 
-        exec_name = attrs.get('__executorname__',
+        exec_name = attrs.get('__executor_name__',
                               '{}Executor'.format(classname))
         NewExecutor = type(exec_name, (Executor,),
-                           dict(__executorname__=exec_name))
+                           dict(__executor_name__=exec_name))
         setattr(new_class, 'executor', NewExecutor())
         setattr(new_class, 'executor_name', exec_name)
         setattr(new_class, 'group_name', classname)
 
-        if classname not in cls.__groups:
-            cls.__groups[classname] = new_class
+        if classname not in cls.__instances__:
+            cls.__instances__[classname] = new_class
 
-        return cls.__groups[classname]
+        return cls.__instances__[classname]
 
 
 class Group(six.with_metaclass(GroupMetaclass, object)):
 
-    __groupname__ = None
-    __executorname__ = None
+    __group_name__ = None
+    __executor_name__ = None
