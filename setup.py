@@ -5,7 +5,13 @@ from codecs import open
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
+
 here = path.abspath(path.dirname(__file__))
+install_requires = ['six']
+
+PY2 = sys.version_info[0] == 2
+if PY2:
+    install_requires.append('futures')
 
 # Get the long description
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
@@ -49,10 +55,10 @@ setup(
     ],
     keywords='sample setuptools development',
     packages=find_packages(exclude=['docs', 'tests*']),
-    install_requires=['six'],
+    install_requires=install_requires,
     extras_require={
         'dev': ['pyflakes', 'pep8', 'pylint', 'check-manifest'],
-        'test': ['pytest', 'pytest-cov'],
+        'test': ['pytest', 'pytest-cov', 'pytest-cache', 'pytest-timeout'],
     },
     cmdclass={'test': PyTest},
 )
