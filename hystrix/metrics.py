@@ -5,8 +5,6 @@ import six
 
 log = logging.getLogger(__name__)
 
-MAX_WORKERS = 5
-
 
 class CommandMetricsMetaclass(type):
 
@@ -19,16 +17,17 @@ class CommandMetricsMetaclass(type):
             return super(CommandMetricsMetaclass, cls).__new__(cls, name,
                                                                bases, attrs)
 
-        classname = attrs.get('__command_metrics_name__',
-                              '{}CommandMetrics'.format(name))
-        new_class = super(CommandMetricsMetaclass, cls).__new__(cls, classname,
+        class_name = attrs.get('__command_metrics_name__',
+                               '{}CommandMetrics'.format(name))
+        new_class = super(CommandMetricsMetaclass, cls).__new__(cls,
+                                                                class_name,
                                                                 bases, attrs)
-        setattr(new_class, 'command_metrics_name', classname)
+        setattr(new_class, 'command_metrics_name', class_name)
 
-        if classname not in cls.__instances__:
-            cls.__instances__[classname] = new_class
+        if class_name not in cls.__instances__:
+            cls.__instances__[class_name] = new_class
 
-        return cls.__instances__[classname]
+        return cls.__instances__[class_name]
 
 
 class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, object)):
@@ -47,17 +46,17 @@ class ExecutorMetricsMetaclass(type):
             return super(ExecutorMetricsMetaclass, cls).__new__(cls, name,
                                                                 bases, attrs)
 
-        classname = attrs.get('__executor_metrics_name__',
-                              '{}ExecutorMetrics'.format(name))
+        class_name = attrs.get('__executor_metrics_name__',
+                               '{}ExecutorMetrics'.format(name))
         new_class = super(ExecutorMetricsMetaclass, cls).__new__(cls,
-                                                                 classname,
+                                                                 class_name,
                                                                  bases, attrs)
-        setattr(new_class, 'executor_metrics_name', classname)
+        setattr(new_class, 'executor_metrics_name', class_name)
 
-        if classname not in cls.__instances__:
-            cls.__instances__[classname] = new_class
+        if class_name not in cls.__instances__:
+            cls.__instances__[class_name] = new_class
 
-        return cls.__instances__[classname]
+        return cls.__instances__[class_name]
 
 
 class ExecutorMetrics(six.with_metaclass(ExecutorMetricsMetaclass, object)):

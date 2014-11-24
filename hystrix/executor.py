@@ -12,22 +12,22 @@ MAX_WORKERS = 5
 class ExecutorMetaclass(type):
 
     __instances__ = dict()
-    __blacklist = ('Executor', 'ExecutorMetaclass')
+    __blacklist__ = ('Executor', 'ExecutorMetaclass')
 
     def __new__(cls, name, bases, attrs):
 
-        if name in cls.__blacklist:
+        if name in cls.__blacklist__:
             return super(ExecutorMetaclass, cls).__new__(cls, name,
                                                          bases, attrs)
 
-        classname = attrs.get('__executor_name__', '{}Executor'.format(name))
-        new_class = super(ExecutorMetaclass, cls).__new__(cls, classname,
+        class_name = attrs.get('__executor_name__', '{}Executor'.format(name))
+        new_class = super(ExecutorMetaclass, cls).__new__(cls, class_name,
                                                           bases, attrs)
-        if classname not in cls.__instances__:
-            setattr(new_class, 'executor_name', classname)
-            cls.__instances__[classname] = new_class
+        if class_name not in cls.__instances__:
+            setattr(new_class, 'executor_name', class_name)
+            cls.__instances__[class_name] = new_class
 
-        return cls.__instances__[classname]
+        return cls.__instances__[class_name]
 
 
 class Executor(six.with_metaclass(ExecutorMetaclass, ThreadPoolExecutor)):

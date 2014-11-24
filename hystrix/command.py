@@ -10,18 +10,21 @@ log = logging.getLogger(__name__)
 
 class CommandMetaclass(type):
 
-    __blacklist = ('Command', 'CommandMetaclass')
+    __blacklist__ = ('Command', 'CommandMetaclass')
 
     def __new__(cls, name, bases, attrs):
-        new_class = type.__new__(cls, name, bases, attrs)
+        class_name = attrs.get('__command_name__', None) or name
+        new_class = type.__new__(cls, class_name, bases, attrs)
 
-        if name in cls.__blacklist:
+        if name in cls.__blacklist__:
             return new_class
 
-        group_name = attrs.get('__group_name__', '{}Group'.format(name))
-        NewGroup = type(group_name, (Group,), dict(__group_name__=group_name))
+        group_name = attrs.get('__group_name__', '{}Group'.format(class_name))
+        NewGroup = type(group_name, (Group,),
+                        dict(__group_name__=group_name))
         setattr(new_class, 'group', NewGroup())
         setattr(new_class, 'group_name', group_name)
+        setattr(new_class, 'command_name', class_name)
 
         return new_class
 
