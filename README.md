@@ -1,6 +1,11 @@
 hystrix-py
 ==========
 
+[![Build Status](https://travis-ci.org/wiliamsouza/hystrix-py.svg)
+](https://travis-ci.org/wiliamsouza/hystrix-py)
+
+[![Coverage Status](https://img.shields.io/coveralls/wiliamsouza/hystrix-py.svg)](https://coveralls.io/r/wiliamsouza/hystrix-py)
+
 A Netflix Hystrix implementation in Python.
 
 What is Hystrix?
@@ -29,7 +34,11 @@ an executor pool.
 Requirements
 ------------
 
-It depends on [concurrent.futures](https://docs.python.org/3/library/concurrent.futures.html#module-concurrent.futures), New in Python version 3.2.
+It depends on [concurrent.futures]
+(https://docs.python.org/3/library/concurrent.futures.html), new in Python
+version 3.2.
+It uses [futures](https://pypi.python.org/pypi/futures), backport to run in
+Python version 2.7.
 
 Installation
 ------------
@@ -51,6 +60,7 @@ Development and test dependencies
 
 ```
 pip install -r requirements_test.txt
+pip install -r requirements_development.txt
 ```
 
 or

@@ -1,0 +1,23 @@
+language: python
+
+python:
+    - "2.7"
+    - "3.2"
+    - "3.3"
+    - "3.4"
+    - "pypy"
+
+script:
+    - python setup.py test
+
+after_success:
+    - pip install coveralls
+    - coverage run --source=cars setup.py -q tests
+    - coveralls
+
+branches:
+  only:
+    - master
+
+notifications:
+    email: false
