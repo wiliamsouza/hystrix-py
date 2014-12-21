@@ -12,6 +12,7 @@ install_requires = ['six']
 PY2 = sys.version_info[0] == 2
 if PY2:
     install_requires.append('futures')
+    install_requires.append('enum34')
 
 # Get the long description
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
