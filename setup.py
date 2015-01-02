@@ -7,11 +7,21 @@ from setuptools.command.test import test as TestCommand
 
 
 here = path.abspath(path.dirname(__file__))
-install_requires = ['six']
 
-PY2 = sys.version_info[0] == 2
+setup_requires = ['pytest', 'tox']
+install_requires = ['six', 'tox']
+dev_requires = ['pyflakes', 'pep8', 'pylint', 'check-manifest', 'ipython', 'ipdb']
+tests_require = ['pytest-cov', 'pytest-cache', 'pytest-timeout']
+
+PY2 = sys.version_info.major is 2
+PY32 = sys.version_info.major is 3 and sys.version_info.minor is 2
+PY33 = sys.version_info.major is 3 and sys.version_info.minor is 3
+
 if PY2:
     install_requires.append('futures')
+    install_requires.append('enum34')
+
+if PY32 or PY33:
     install_requires.append('enum34')
 
 # Get the long description
@@ -55,10 +65,12 @@ setup(
     ],
     keywords='sample setuptools development',
     packages=find_packages(exclude=['docs', 'tests*']),
+    setup_requires=setup_requires,
     install_requires=install_requires,
+    tests_require=tests_require,
     extras_require={
-        'dev': ['pyflakes', 'pep8', 'pylint', 'check-manifest'],
-        'test': ['pytest', 'pytest-cov', 'pytest-cache', 'pytest-timeout'],
+        'dev': dev_requires,
+        'test': tests_require,
     },
     cmdclass={'test': PyTest},
 )
