@@ -3,10 +3,10 @@ hystrix-py
 
 [![Build Status](https://travis-ci.org/wiliamsouza/hystrix-py.svg)
 ](https://travis-ci.org/wiliamsouza/hystrix-py)
-
 [![Coverage Status](https://img.shields.io/coveralls/wiliamsouza/hystrix-py.svg)](https://coveralls.io/r/wiliamsouza/hystrix-py)
 
 A Netflix Hystrix implementation in Python.
+
 
 What is Hystrix?
 ----------------
@@ -14,12 +14,14 @@ What is Hystrix?
 For more information see the [Netflix Hystrix]
 (https://github.com/Netflix/Hystrix/wiki) Wiki documentation.
 
+
 How it works
 ------------
 
 To know more see the [Netflix Hystrix]
 (https://github.com/Netflix/Hystrix/wiki/How-it-Works) Wiki How it works
 section documentation.
+
 
 Features
 --------
@@ -31,43 +33,55 @@ an executor pool.
 * Execute asynchronous commands.
 * Execute asynchronous commands and attach a callback.
 
+
 Requirements
 ------------
 
 It depends on [concurrent.futures]
 (https://docs.python.org/3/library/concurrent.futures.html), new in Python
-version 3.2.
-It uses [futures](https://pypi.python.org/pypi/futures), backport to run in
-Python version 2.7.
+version 3.2 and [enum]
+(https://docs.python.org/3.4/library/enum.html), new in Python version 3.4.
+It uses [futures](https://pypi.python.org/pypi/futures) and
+[enum34](https://pypi.python.org/pypi/enum34/) backports to run in Python
+version 2.7, 3.3 and 3.4.
+
 
 Installation
 ------------
 
+Create a virtualenv:
+
 ```
 mkproject --python=<fullpath_to_python_3.2+> hystrix-py
-git clone https://github.com/wiliamsouza/hystrix-py hystrix-py
-pip install -r requirements.txt
 ```
 
-or
+Get the code:
 
 ```
-pip install -e https://github.com/wiliamsouza/hystrix-py
+git clone https://github.com/wiliamsouza/hystrix-py
 ```
+
+Install it:
+
+```
+python setup.py develop
+```
+
+The last command enter your code in "Development Mode" it creates an
+`egg-link` in your virtualenv's `site-packages` making it available
+on this environment `sys.path`. For more info see [setuptools development-mode]
+(https://pythonhosted.org/setuptools/setuptools.html#development-mode)
+
 
 Development and test dependencies
 ---------------------------------
 
-```
-pip install -r requirements_test.txt
-pip install -r requirements_development.txt
-```
-
-or
+`setup.py` will handle dependencies, but you can install it using:
 
 ```
 pip install -e .[dev,test]
 ```
+
 
 Tests
 -----
@@ -75,6 +89,7 @@ Tests
 ```
 python setup.py test
 ```
+
 
 Hello world
 -----------
