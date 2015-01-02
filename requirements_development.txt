@@ -1,6 +1,0 @@
-pyflakes
-pep8
-pylint
-check-manifest
-ipython
-ipdb
