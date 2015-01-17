@@ -27,14 +27,15 @@ class RollingNumber(object):
         self.time = time
         self.milliseconds = milliseconds
         self.buckets = BucketCircular(bucket_numbers)
+        self.bucket_numbers = bucket_numbers
 
-        if self.milliseconds % bucket_numbers != 0:
+        if self.milliseconds % self.bucket_numbers != 0:
             raise Exception('The milliseconds must divide equally into '
                             'bucket_numbers. For example 1000/10 is ok, '
                             '1000/11 is not.')
 
     def buckets_size_in_milliseconds(self):
-        return self.milliseconds / self.buckets.maxlen
+        return self.milliseconds / self.bucket_numbers
 
     def increment(self, event_type):
         pass
@@ -45,14 +46,10 @@ class BucketCircular(deque):
 
     def __init__(self, size):
         super(BucketCircular, self).__init__(maxlen=size + 1)
-        self._buckets = []
-        self.num_buckets = size
-        self.state = []
-        self.data_length = len(self._buckets)
 
     @property
     def size(self):
-        return len(self.state)
+        return len(self)
 
     def get_last(self):
         return self.peek_last()
