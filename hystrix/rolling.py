@@ -43,15 +43,16 @@ class RollingNumber(object):
 class BucketCircular(deque):
     ''' This is a circular array acting as a FIFO queue. '''
 
-    def __init__(self, maxlen=0):
-        super(BucketCircular, self).__init__(maxlen=maxlen)
+    def __init__(self, size):
+        super(BucketCircular, self).__init__(maxlen=size + 1)
         self._buckets = []
+        self.num_buckets = size
         self.state = []
         self.data_length = len(self._buckets)
 
     @property
     def size(self):
-        return len(self)
+        return len(self.state)
 
     def get_last(self):
         return self.peek_last()
