@@ -76,10 +76,10 @@ on this environment `sys.path`. For more info see [setuptools development-mode]
 Development and test dependencies
 ---------------------------------
 
-`setup.py` will handle dependencies, but you can install it using:
+`setup.py` will handle test dependencies, to install development use:
 
 ```
-pip install -e .[dev,test]
+pip install -e .[dev]
 ```
 
 
