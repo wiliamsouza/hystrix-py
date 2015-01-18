@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from multiprocessing import Value, Lock
 from collections import deque
 from enum import Enum
 import logging
@@ -28,6 +29,7 @@ class RollingNumber(object):
         self.milliseconds = milliseconds
         self.buckets = BucketCircular(bucket_numbers)
         self.bucket_numbers = bucket_numbers
+        self.cumulative_sum = CumulativeSum()
 
         if self.milliseconds % self.bucket_numbers != 0:
             raise Exception('The milliseconds must divide equally into '
@@ -38,28 +40,49 @@ class RollingNumber(object):
         return self.milliseconds / self.bucket_numbers
 
     def increment(self, event):
-        self.current_bucket().get_adder(event).increment()
+        self.current_bucket().adder(event).increment()
 
     def current_bucket(self):
         current_time = self.time.current_time_in_millis()
         current_bucket = self.buckets.peek_last()
 
-        time = current_bucket.window_start + self.time.current_time_in_millis()
-        if current_bucket is not None and current_time < time:
+        if current_bucket is not None and current_time < current_bucket.window_start + self.time.current_time_in_millis():
             return current_bucket
 
         # If we didn't find the current bucket above, then we have to
         # create one.
         if not self.buckets.peek_last():
-            # TODO: Finish this
-            pass
+            new_bucket = Bucket(current_time)
+            self.buckets.add_last(new_bucket)
+            return new_bucket
+        else:
+            for i in range(self.bucket_numbers):
+                last_bucket = self.buckets.peek_last()
+                time = last_bucket.window_start + self.buckets_size_in_milliseconds()
+                if current_time < time:
+                    return last_bucket
+                elif current_time - time > self.milliseconds:
+                    self.reset()
+                    return self.current_bucket()
+                else:
+                    self.buckets.add_last(Bucket(time))
+                    self.cumulative_sum.add_bucket(last_bucket)
+
+            return self.buckets.peek_last()
+
+    def reset(self):
+        last_bucket = self.buckets.peek_last()
+        if last_bucket:
+            self.cumulative_sum.add_bucket(last_bucket)
+
+        self.buckets.clear()
 
 
 class BucketCircular(deque):
     ''' This is a circular array acting as a FIFO queue. '''
 
     def __init__(self, size):
-        super(BucketCircular, self).__init__(maxlen=size + 1)
+        super(BucketCircular, self).__init__(maxlen=size)
 
     @property
     def size(self):
@@ -69,7 +92,13 @@ class BucketCircular(deque):
         return self.peek_last()
 
     def peek_last(self):
-        return self.pop()
+        try:
+            return self[-1]
+        except IndexError:
+            return None
+
+    def add_last(self, bucket):
+        self.appendleft(bucket)
 
 
 class Bucket(object):
@@ -77,48 +106,119 @@ class Bucket(object):
 
     def __init__(self, start_time):
         self.window_start = start_time
-        self.adder = {}
-        self.updater = {}
+        self._adder = {}
+        self._max_updater = {}
 
         # TODO: Change this to use a metaclass
-        for name, event in RollingNumberEvent.__menbers__.items():
+        for name, event in RollingNumberEvent.__members__.items():
             if event.is_counter():
-                self.adder[name] = LongAdder()
-
-        for name, event in RollingNumberEvent.__menbers__.items():
-            if event.is_max_updater():
-                self.updater[name] = LongMaxUpdater()
-
-        def get(self, event):
-            if event.is_counter():
-                return self.get_adder(event).sum()
+                self._adder[name] = LongAdder()
+                continue
 
             if event.is_max_updater():
-                return self.get_max_updater(event).max()
+                self._max_updater[name] = LongMaxUpdater()
 
-            raise Exception('Unknown type of event.')
+    def get(self, event):
+        if event.is_counter():
+            return self.adder(event).sum()
 
-        def get_adder(self, event):
+        if event.is_max_updater():
+            return self.max_updater(event).max()
+
+        raise Exception('Unknown type of event.')
+
+    def adder(self, event):
+        if event.is_counter():
+            return self._adder[event.name]
+
+        raise Exception('Unknown type of event.')
+
+    def max_updater(self, event):
+        if event.is_max_updater():
+            return self._max_updater[event.name]
+
+        raise Exception('Unknown type of event.')
+
+
+class Counter(object):
+    def __init__(self, min_value=0):
+        self.count = Value('i', min_value)
+        self.lock = Lock()
+
+    def increment(self):
+        with self.lock:
+            self.count.value += 1
+
+    def decrement(self):
+        with self.lock:
+            self.count.value -= 1
+
+
+class LongAdder(Counter):
+
+    def sum(self):
+        with self.lock:
+            return self.count.value
+
+    def add(self, value):
+        with self.lock:
+            self.count.value += value
+
+
+class LongMaxUpdater(Counter):
+
+    def max(self):
+        with self.lock:
+            return self.count.value
+
+    def update(self, value):
+        with self.lock:
+            self.count.value = value
+
+
+class CumulativeSum(object):
+
+    def __init__(self):
+        self._adder = {}
+        self._max_updater = {}
+
+        # TODO: Change this to use a metaclass
+        for name, event in RollingNumberEvent.__members__.items():
             if event.is_counter():
-                return self.adder[event.name]
+                self._adder[name] = LongAdder()
+                continue
 
-            raise Exception('Unknown type of event.')
-
-        def get_max_updater(event):
             if event.is_max_updater():
-                return self.updater[event.name]
+                self._max_updater[name] = LongMaxUpdater()
 
-            raise Exception('Unknown type of event.')
+    def add_bucket(self, bucket):
+        for name, event in RollingNumberEvent.__members__.items():
+            if event.is_counter():
+                self.adder(event).add(bucket.adder(event).sum())
 
+            if event.is_max_updater():
+                self.max_updater(event).update(bucket.max_updater(event).max())
 
-class LongAdder(object):
-    # TODO: Use multiprocessing.Value('i', 0)
-    pass
+    def get(self, event):
+        if event.is_counter():
+            return self.adder(event).sum()
 
+        if event.is_max_updater():
+            return self.max_updater(event).max()
 
-class LongMaxUpdater(object):
-    # TODO: Use multiprocessing.Value('i', 0)
-    pass
+        raise Exception('Unknown type of event.')
+
+    def adder(self, event):
+        if event.is_counter():
+            return self._adder[event.name]
+
+        raise Exception('Unknown type of event.')
+
+    def max_updater(self, event):
+        if event.is_max_updater():
+            return self._max_updater[event.name]
+
+        raise Exception('Unknown type of event.')
 
 
 class RollingNumberEvent(Enum):

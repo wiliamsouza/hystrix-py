@@ -15,7 +15,6 @@ def test_create_buckets():
     #  we start out with 0 buckets in the queue
     assert counter.buckets.size == 0
 
-    """
     #  add a success in each interval which should result in all 10 buckets
     #  being created with 1 success in each
     for r in range(counter.bucket_numbers):
@@ -28,7 +27,6 @@ def test_create_buckets():
     #  add 1 more and we should still only have 10 buckets since that's the max
     counter.increment(RollingNumberEvent.SUCCESS)
     assert counter.buckets.size == 10
-    """
 
 
 def test_milliseconds_buckets_size_error():
