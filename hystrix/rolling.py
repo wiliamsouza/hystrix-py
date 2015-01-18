@@ -37,8 +37,22 @@ class RollingNumber(object):
     def buckets_size_in_milliseconds(self):
         return self.milliseconds / self.bucket_numbers
 
-    def increment(self, event_type):
-        pass
+    def increment(self, event):
+        self.current_bucket().get_adder(event).increment()
+
+    def current_bucket(self):
+        current_time = self.time.current_time_in_millis()
+        current_bucket = self.buckets.peek_last()
+
+        time = current_bucket.window_start + self.time.current_time_in_millis()
+        if current_bucket is not None and current_time < time:
+            return current_bucket
+
+        # If we didn't find the current bucket above, then we have to
+        # create one.
+        if not self.buckets.peek_last():
+            # TODO: Finish this
+            pass
 
 
 class BucketCircular(deque):
@@ -56,6 +70,55 @@ class BucketCircular(deque):
 
     def peek_last(self):
         return self.pop()
+
+
+class Bucket(object):
+    ''' Counters for a given 'bucket' of time. '''
+
+    def __init__(self, start_time):
+        self.window_start = start_time
+        self.adder = {}
+        self.updater = {}
+
+        # TODO: Change this to use a metaclass
+        for name, event in RollingNumberEvent.__menbers__.items():
+            if event.is_counter():
+                self.adder[name] = LongAdder()
+
+        for name, event in RollingNumberEvent.__menbers__.items():
+            if event.is_max_updater():
+                self.updater[name] = LongMaxUpdater()
+
+        def get(self, event):
+            if event.is_counter():
+                return self.get_adder(event).sum()
+
+            if event.is_max_updater():
+                return self.get_max_updater(event).max()
+
+            raise Exception('Unknown type of event.')
+
+        def get_adder(self, event):
+            if event.is_counter():
+                return self.adder[event.name]
+
+            raise Exception('Unknown type of event.')
+
+        def get_max_updater(event):
+            if event.is_max_updater():
+                return self.updater[event.name]
+
+            raise Exception('Unknown type of event.')
+
+
+class LongAdder(object):
+    # TODO: Use multiprocessing.Value('i', 0)
+    pass
+
+
+class LongMaxUpdater(object):
+    # TODO: Use multiprocessing.Value('i', 0)
+    pass
 
 
 class RollingNumberEvent(Enum):
