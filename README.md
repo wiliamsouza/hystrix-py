@@ -58,7 +58,7 @@ mkproject --python=<fullpath_to_python_3.2+> hystrix-py
 Get the code:
 
 ```
-git clone https://github.com/wiliamsouza/hystrix-py
+git clone https://github.com/wiliamsouza/hystrix-py .
 ```
 
 Install it:
