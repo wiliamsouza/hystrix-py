@@ -1,4 +1,4 @@
-from hystrix.rolling import RollingNumber, RollingNumberEvent
+from hystrix.rolling_number import RollingNumber, RollingNumberEvent
 
 import pytest
 
