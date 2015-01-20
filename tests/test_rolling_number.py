@@ -20,7 +20,6 @@ def test_create_buckets():
     # add a success in each interval which should result in all 10 buckets
     # being created with 1 success in each
     for r in range(counter.bucket_numbers):
-        import ipdb; ipdb.set_trace()  # Breakpoint
         counter.increment(RollingNumberEvent.SUCCESS)
         time.increment(counter.buckets_size_in_milliseconds())
 

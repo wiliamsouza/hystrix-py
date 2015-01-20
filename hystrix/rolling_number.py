@@ -48,7 +48,7 @@ class RollingNumber(object):
         current_time = self.time.current_time_in_millis()
         current_bucket = self.buckets.peek_last()
 
-        if current_bucket is not None and current_time < current_bucket.window_start + self.time.current_time_in_millis():
+        if current_bucket is not None and current_time < current_bucket.window_start + self.buckets_size_in_milliseconds():
             return current_bucket
 
         with self._new_bucket_lock:
