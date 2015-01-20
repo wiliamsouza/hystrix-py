@@ -77,6 +77,31 @@ def test_empty_buckets_fill_in():
     assert counter.buckets.size == 4
 
 
+def test_increment_in_single_bucket():
+    time = MockedTime()
+    counter = RollingNumber(time, 200, 10)
+
+    # We start out with 0 buckets in the queue
+    assert counter.buckets.size == 0
+
+    # Increment
+    counter.increment(RollingNumberEvent.SUCCESS)
+    counter.increment(RollingNumberEvent.SUCCESS)
+    counter.increment(RollingNumberEvent.SUCCESS)
+    counter.increment(RollingNumberEvent.SUCCESS)
+    counter.increment(RollingNumberEvent.FAILURE)
+    counter.increment(RollingNumberEvent.FAILURE)
+    counter.increment(RollingNumberEvent.TIMEOUT)
+
+    # Confirm we have 1 bucket
+    assert counter.buckets.size == 1
+
+    # The count should match
+    assert 4, counter.buckets.get_last().adder(RollingNumberEvent.SUCCESS).sum()
+    assert 2, counter.buckets.get_last().adder(RollingNumberEvent.FAILURE).sum()
+    assert 1, counter.buckets.get_last().adder(RollingNumberEvent.TIMEOUT).sum()
+
+
 def test_milliseconds_buckets_size_error():
     time = MockedTime()
 
