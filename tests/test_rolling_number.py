@@ -68,6 +68,7 @@ def test_empty_buckets_fill_in():
     # Confirm we have 1 bucket
     assert counter.buckets.size == 1
 
+    # Wait past 3 bucket time periods (the 1st bucket then 2 empty ones)
     time.increment(counter.buckets_size_in_milliseconds() * 3)
 
     # Add another
@@ -97,9 +98,43 @@ def test_increment_in_single_bucket():
     assert counter.buckets.size == 1
 
     # The count should match
-    assert 4, counter.buckets.get_last().adder(RollingNumberEvent.SUCCESS).sum()
-    assert 2, counter.buckets.get_last().adder(RollingNumberEvent.FAILURE).sum()
-    assert 1, counter.buckets.get_last().adder(RollingNumberEvent.TIMEOUT).sum()
+    assert counter.buckets.last().adder(RollingNumberEvent.SUCCESS).sum() == 4
+    assert counter.buckets.last().adder(RollingNumberEvent.FAILURE).sum() == 2
+    assert counter.buckets.last().adder(RollingNumberEvent.TIMEOUT).sum() == 1
+
+
+def test_timeout():
+    time = MockedTime()
+    counter = RollingNumber(time, 200, 10)
+
+    # We start out with 0 buckets in the queue
+    assert counter.buckets.size == 0
+
+    # Increment
+    counter.increment(RollingNumberEvent.TIMEOUT)
+
+    # We shoud have 1 bucket
+    assert counter.buckets.size == 1
+
+    # The count should match
+    assert counter.buckets.last().adder(RollingNumberEvent.TIMEOUT).sum() == 1
+    #import ipdb; ipdb.set_trace()  # Breakpoint
+    assert counter.rolling_sum(RollingNumberEvent.TIMEOUT) == 1
+
+    # Sleep to get to a new bucket
+    time.increment(counter.buckets_size_in_milliseconds() * 3)
+
+    # Incremenet again in latest bucket
+    counter.increment(RollingNumberEvent.TIMEOUT)
+
+    # We should have 4 buckets
+    assert counter.buckets.size == 4
+
+    # The count of the last bucket
+    assert counter.buckets.last().adder(RollingNumberEvent.TIMEOUT).sum() == 1
+
+    # The total count
+    assert counter.rolling_sum(RollingNumberEvent.TIMEOUT) == 2
 
 
 def test_milliseconds_buckets_size_error():

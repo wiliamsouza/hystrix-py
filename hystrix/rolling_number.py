@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from multiprocessing import Value, Lock
 from collections import deque
-from enum import Enum
-import time
 import logging
+import types
+import time
+
+import six
 
 log = logging.getLogger(__name__)
 
@@ -91,6 +93,16 @@ class RollingNumber(object):
 
         self.buckets.clear()
 
+    def rolling_sum(self, event):
+        last_bucket = self.current_bucket()
+        if not last_bucket:
+            return 0
+
+        sum = 0
+        for bucket in self.buckets:
+            sum += bucket.adder(event).sum()
+        return sum
+
 
 class BucketCircular(deque):
     ''' This is a circular array acting as a FIFO queue. '''
@@ -102,7 +114,7 @@ class BucketCircular(deque):
     def size(self):
         return len(self)
 
-    def get_last(self):
+    def last(self):
         return self.peek_last()
 
     def peek_last(self):
@@ -235,7 +247,59 @@ class CumulativeSum(object):
         raise Exception('Unknown type of event.')
 
 
-class RollingNumberEvent(Enum):
+def _is_function(obj):
+    return isinstance(obj, types.FunctionType)
+
+
+def _is_dunder(name):
+    return (name[:2] == name[-2:] == '__' and
+            name[2:3] != '_' and
+            name[-3:-2] != '_' and
+            len(name) > 4)
+
+
+class Event(object):
+
+    def __init__(self, name, value):
+        self._name = name
+        self._value = value
+
+    def is_counter(self):
+        return self._value == 1
+
+    def is_max_updater(self):
+        return self._value == 2
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def value(self):
+        return self._value
+
+
+class EventMetaclass(type):
+
+    def __new__(cls, name, bases, attrs):
+        __members = {}
+
+        for name, value in attrs.items():
+            if not _is_dunder(name) and not _is_function(value):
+                __members[name] = Event(name, value)
+
+        for name, value in __members.items():
+            attrs[name] = __members[name]
+
+        new_class = super(EventMetaclass, cls).__new__(cls, name,
+                                                       bases, attrs)
+
+        setattr(new_class, '__members__', __members)
+
+        return new_class
+
+
+class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
     ''' Various states/events that can be captured in the RollingNumber.
 
     Note that events are defined as different types:
@@ -265,11 +329,11 @@ class RollingNumberEvent(Enum):
     COLLAPSED = 1
     RESPONSE_FROM_CACHE = 1
 
-    def __init__(self, event_type):
-        self.event_type = event_type
+    def __init__(self, event):
+        self._event = event
 
     def is_counter(self):
-        return self.event_type == 1
+        return self._event.value == 1
 
     def is_max_updater(self):
-        return self.event_type == 2
+        return self._event.value == 2
