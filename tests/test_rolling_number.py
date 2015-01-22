@@ -336,6 +336,76 @@ def test_update_max_2():
     assert values[3] == 30  # Oldest bucket
 
 
+def test_max_value():
+    time = MockedTime()
+    counter = RollingNumber(time, 200, 10)
+    # TODO: Change tests to use this aproache for events
+    event = RollingNumberEvent.THREAD_MAX_ACTIVE
+
+    # We start out with 0 buckets in the queue
+    assert counter.buckets.size == 0
+
+    # Increment
+    counter.update_rolling_max(event, 10)
+
+    # Sleep to get to a new bucket
+    time.increment(counter.buckets_size_in_milliseconds())
+
+    # Increment
+    counter.update_rolling_max(event, 30)
+
+    # Sleep to get to a new bucket
+    time.increment(counter.buckets_size_in_milliseconds())
+
+    # Increment
+    counter.update_rolling_max(event, 40)
+
+    # Sleep to get to a new bucket
+    time.increment(counter.buckets_size_in_milliseconds())
+
+    # Try Decrement
+    counter.update_rolling_max(event, 15)
+
+    # The count should be max
+    counter.update_rolling_max(event, 40)
+
+
+def test_empty_sum():
+    time = MockedTime()
+    counter = RollingNumber(time, 200, 10)
+    event = RollingNumberEvent.COLLAPSED
+    assert counter.rolling_sum(event) == 0
+
+
+def test_empty_max():
+    time = MockedTime()
+    counter = RollingNumber(time, 200, 10)
+    event = RollingNumberEvent.THREAD_MAX_ACTIVE
+    assert counter.rolling_max(event) == 0
+
+
+def test_empty_latest_value():
+    time = MockedTime()
+    counter = RollingNumber(time, 200, 10)
+    event = RollingNumberEvent.THREAD_MAX_ACTIVE
+    assert counter.value_of_latest_bucket(event) == 0
+
+
+def test_rolling():
+    time = MockedTime()
+    counter = RollingNumber(time, 20, 2)
+    event = RollingNumberEvent.THREAD_MAX_ACTIVE
+    assert counter.value_of_latest_bucket(event) == 0
+
+    for i in range(20):
+        counter.current_bucket()
+        time.increment(counter.buckets_size_in_milliseconds())
+
+    assert len(counter.get_values(event)) == 2
+
+    counter.value_of_latest_bucket(event)
+
+
 def test_milliseconds_buckets_size_error():
     time = MockedTime()
 
