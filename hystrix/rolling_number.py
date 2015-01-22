@@ -46,6 +46,9 @@ class RollingNumber(object):
     def increment(self, event):
         self.current_bucket().adder(event).increment()
 
+    def update_rolling_max(self, event, value):
+        self.current_bucket().max_updater(event).update(value)
+
     def current_bucket(self):
         current_time = self.time.current_time_in_millis()
         current_bucket = self.buckets.peek_last()
@@ -103,6 +106,34 @@ class RollingNumber(object):
             sum += bucket.adder(event).sum()
         return sum
 
+    def rolling_max(self, event):
+        values = self.get_values(event)
+        if not values:
+            return 0
+        else:
+            return values[len(values) - 1]
+
+    # TODO: Rename to values
+    def get_values(self, event):
+        last_bucket = self.current_bucket()
+        if not last_bucket:
+            return 0
+
+        values = []
+        for bucket in self.buckets:
+            if event.is_counter():
+                values.append(bucket.adder(event).sum())
+            if event.is_max_updater():
+                values.append(bucket.max_updater(event).max())
+        return values
+
+    def value_of_latest_bucket(self, event):
+        last_bucket = self.current_bucket()
+        if not last_bucket:
+            return 0
+
+        return last_bucket.get(event)
+
 
 class BucketCircular(deque):
     ''' This is a circular array acting as a FIFO queue. '''
@@ -153,20 +184,23 @@ class Bucket(object):
 
         raise Exception('Unknown type of event.')
 
+    # TODO: Rename to add
     def adder(self, event):
         if event.is_counter():
             return self._adder[event.name]
 
-        raise Exception('Unknown type of event.')
+        raise Exception('Type is not a LongAdder.')
 
+    # TODO: Rename to update_max
     def max_updater(self, event):
         if event.is_max_updater():
             return self._max_updater[event.name]
 
-        raise Exception('Unknown type of event.')
+        raise Exception('Type is not a LongMaxUpdater.')
 
 
-class Counter(object):
+class LongAdder(object):
+
     def __init__(self, min_value=0):
         self.count = Value('i', min_value)
         self.lock = Lock()
@@ -179,9 +213,6 @@ class Counter(object):
         with self.lock:
             self.count.value -= 1
 
-
-class LongAdder(Counter):
-
     def sum(self):
         with self.lock:
             return self.count.value
@@ -191,15 +222,20 @@ class LongAdder(Counter):
             self.count.value += value
 
 
-class LongMaxUpdater(Counter):
+class LongMaxUpdater(object):
+
+    def __init__(self, min_value=0):
+        self.count = Value('i', min_value)
+        self.lock = Lock()
 
     def max(self):
         with self.lock:
             return self.count.value
 
     def update(self, value):
-        with self.lock:
-            self.count.value = value
+        if value > self.max():
+            with self.lock:
+                self.count.value = value
 
 
 class CumulativeSum(object):
