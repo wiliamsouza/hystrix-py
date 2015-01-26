@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from multiprocessing import Value, Lock
+from multiprocessing import Value, Lock, RLock
 from collections import deque
 import logging
 import types
@@ -33,7 +33,7 @@ class RollingNumber(object):
         self.buckets = BucketCircular(bucket_numbers)
         self.bucket_numbers = bucket_numbers
         self.cumulative_sum = CumulativeSum()
-        self._new_bucket_lock = Lock()
+        self._new_bucket_lock = RLock()
 
         if self.milliseconds % self.bucket_numbers != 0:
             raise Exception('The milliseconds must divide equally into '
@@ -53,7 +53,7 @@ class RollingNumber(object):
         current_time = self.time.current_time_in_millis()
         current_bucket = self.buckets.peek_last()
 
-        if current_bucket is not None and current_time < current_bucket.window_start + self.buckets_size_in_milliseconds():
+        if current_bucket is not None and current_time < (current_bucket.window_start + self.buckets_size_in_milliseconds()):
             return current_bucket
 
         with self._new_bucket_lock:
@@ -66,7 +66,7 @@ class RollingNumber(object):
             else:
                 for i in range(self.bucket_numbers):
                     last_bucket = self.buckets.peek_last()
-                    if current_time < last_bucket.window_start + self.buckets_size_in_milliseconds():
+                    if current_time < (last_bucket.window_start + self.buckets_size_in_milliseconds()):
                         return last_bucket
                     elif current_time - (last_bucket.window_start + self.buckets_size_in_milliseconds()) > self.milliseconds:
                         self.reset()
@@ -133,6 +133,9 @@ class RollingNumber(object):
             return 0
 
         return last_bucket.get(event)
+
+    def get_cumulative_sum(self, event):
+        return self.value_of_latest_bucket(event) + self.cumulative_sum.get(event)
 
 
 class BucketCircular(deque):

@@ -1,8 +1,8 @@
 from multiprocessing import Value, Lock
 
-from hystrix.rolling_number import RollingNumber, RollingNumberEvent
-
 import pytest
+
+from hystrix.rolling_number import RollingNumber, RollingNumberEvent
 
 
 def test_create_buckets():
@@ -395,15 +395,117 @@ def test_rolling():
     time = MockedTime()
     counter = RollingNumber(time, 20, 2)
     event = RollingNumberEvent.THREAD_MAX_ACTIVE
-    assert counter.value_of_latest_bucket(event) == 0
 
+    assert counter.get_cumulative_sum(event) == 0
+
+    # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
         counter.current_bucket()
         time.increment(counter.buckets_size_in_milliseconds())
 
-    assert len(counter.get_values(event)) == 2
+        assert len(counter.get_values(event)) == 2
 
-    counter.value_of_latest_bucket(event)
+        counter.value_of_latest_bucket(event)
+
+
+def test_cumulative_counter_after_rolling():
+    time = MockedTime()
+    counter = RollingNumber(time, 20, 2)
+    event = RollingNumberEvent.SUCCESS
+
+    assert counter.get_cumulative_sum(event) == 0
+
+    # Iterate over 20 buckets on a queue sized for 2
+    for i in range(20):
+        counter.increment(event)
+        time.increment(counter.buckets_size_in_milliseconds())
+
+        assert len(counter.get_values(event)) == 2
+
+        counter.value_of_latest_bucket(event)
+
+    # Cumulative count should be 20 (for the number of loops above) regardless
+    # of buckets rolling
+    assert counter.get_cumulative_sum(event) == 20
+
+
+def test_cumulative_counter_after_rolling_and_reset():
+    time = MockedTime()
+    counter = RollingNumber(time, 20, 2)
+    event = RollingNumberEvent.SUCCESS
+
+    assert counter.get_cumulative_sum(event) == 0
+
+    # Iterate over 20 buckets on a queue sized for 2
+    for i in range(20):
+        counter.increment(event)
+        time.increment(counter.buckets_size_in_milliseconds())
+
+        assert len(counter.get_values(event)) == 2
+
+        counter.value_of_latest_bucket(event)
+
+        # simulate a reset occurring every once in a while
+        # so we ensure the absolute sum is handling it okay
+        if i == 5 or i == 15:
+            counter.reset()
+
+    # Cumulative count should be 20 (for the number of loops above) regardless
+    # of buckets rolling
+    assert counter.get_cumulative_sum(event) == 20
+
+
+def test_cumulative_counter_after_rolling_and_reset2():
+    time = MockedTime()
+    counter = RollingNumber(time, 20, 2)
+    event = RollingNumberEvent.SUCCESS
+
+    assert counter.get_cumulative_sum(event) == 0
+
+    counter.increment(event)
+    counter.increment(event)
+    counter.increment(event)
+
+    # Iterate over 20 buckets on a queue sized for 2
+    for i in range(20):
+        time.increment(counter.buckets_size_in_milliseconds())
+
+        # simulate a reset occurring every once in a while
+        # so we ensure the absolute sum is handling it okay
+        if i == 5 or i == 15:
+            counter.reset()
+
+    # No increments during the loop, just some before and after
+    counter.increment(event)
+    counter.increment(event)
+
+    # Cumulative count should be 5 regardless of buckets rolling
+    assert counter.get_cumulative_sum(event) == 5
+
+
+def test_cumulative_counter_after_rolling_and_reset3():
+    time = MockedTime()
+    counter = RollingNumber(time, 20, 2)
+    event = RollingNumberEvent.SUCCESS
+
+    assert counter.get_cumulative_sum(event) == 0
+
+    counter.increment(event)
+    counter.increment(event)
+    counter.increment(event)
+
+    # Iterate over 20 buckets on a queue sized for 2
+    for i in range(20):
+        time.increment(counter.buckets_size_in_milliseconds())
+
+    # Since we are rolling over the buckets it should reset naturally
+
+    # No increments during the loop, just some before and after
+    counter.increment(event)
+    counter.increment(event)
+
+    # Cumulative count should be 5 regardless of buckets rolling
+    assert counter.get_cumulative_sum(event) == 5
 
 
 def test_milliseconds_buckets_size_error():
