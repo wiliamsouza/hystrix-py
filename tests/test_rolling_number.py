@@ -1,6 +1,6 @@
-from multiprocessing import Value, Lock
-
 import pytest
+
+from .utils import MockedTime
 
 from hystrix.rolling_number import RollingNumber, RollingNumberEvent
 
@@ -523,22 +523,6 @@ def test_rolling_number_event_is_counter():
 def test_rolling_number_event_is_max_updater():
     event = RollingNumberEvent(RollingNumberEvent.THREAD_MAX_ACTIVE)
     assert event.is_max_updater() is True
-
-
-class MockedTime():
-
-    def __init__(self):
-        self._time = Value('f', 0)
-        self._lock = Lock()
-
-    def current_time_in_millis(self):
-        with self._lock:
-            return self._time.value
-
-    def increment(self, millis):
-        with self._lock:
-            self._time.value += millis
-        return self.current_time_in_millis()
 
 
 def counter_event(event):
