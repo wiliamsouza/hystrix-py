@@ -59,3 +59,33 @@ def test_rolling():
 
     # mean = 1000+1000+1000+2000+1000+500+200+200+1600+200+1600+1600/12
     assert snapshot.mean() == 991
+
+
+def test_value_is_zero_after_rolling_window_passes_and_no_traffic():
+    time = MockedTime()
+    percentile = RollingPercentile(time, 60000, 12, 1000, True)
+    percentile.add_value(1000)
+    percentile.add_value(1000)
+    percentile.add_value(1000)
+    percentile.add_value(2000)
+    percentile.add_value(4000)
+
+    assert percentile.buckets.size == 1
+
+    # No bucket turnover yet so percentile not yet generated
+    assert percentile.percentile(50) == 0
+
+    time.increment(6000)
+
+    # Still only 1 bucket until we touch it again
+    assert percentile.buckets.size == 1
+
+    # A bucket has been created so we have a new percentile
+    assert percentile.percentile(50) == 1500
+
+    # Let 1 minute pass
+    time.increment(60000)
+
+    # No data in a minute should mean all buckets are empty (or reset) so we
+    # should not have any percentiles
+    assert percentile.percentile(50) == 0
