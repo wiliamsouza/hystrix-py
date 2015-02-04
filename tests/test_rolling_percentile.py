@@ -1,4 +1,7 @@
+import pytest
+
 from .utils import MockedTime
+from .sample_data import sample_data_holder_1, sample_data_holder_2
 
 from hystrix.rolling_percentile import RollingPercentile, PercentileSnapshot
 
@@ -89,3 +92,59 @@ def test_value_is_zero_after_rolling_window_passes_and_no_traffic():
     # No data in a minute should mean all buckets are empty (or reset) so we
     # should not have any percentiles
     assert percentile.percentile(50) == 0
+
+
+def test_sample_data_over_time_1():
+    time = MockedTime()
+    percentile = RollingPercentile(time, 60000, 12, 1000, True)
+    previous_time = 0
+    for time_millis, latency in sample_data_holder_1:
+        time.increment(time_millis - previous_time)
+        previous_time = time_millis
+        import ipdb; ipdb.set_trace()  # Breakpoint
+        percentile.add_value(latency)
+
+    print('0.01', percentile.percentile(0.01))
+    print('Median', percentile.percentile(50))
+    print('90th', percentile.percentile(90))
+    print('99th', percentile.percentile(99))
+    print('99.5th', percentile.percentile(99.5))
+    print('99.99', percentile.percentile(99.99))
+
+    # In a loop as a use case was found where very different values were
+    # calculated in subsequent requests.
+    for _ in range(10):
+        percentile50 = percentile.percentile(50)
+        if percentile50 > 5:
+            pytest.fail('We expect around 2 but got: {}'.format(percentile50))
+
+        percentile995 = percentile.percentile(99.5)
+        if percentile995 < 20:
+            msg = 'We expect to see some high values over 20 but got: {}'
+            pytest.fail(msg.format(percentile995))
+
+
+def test_sample_data_over_time_2():
+    time = MockedTime()
+    percentile = RollingPercentile(time, 60000, 12, 1000, True)
+    previous_time = 0
+    for time_millis, latency in sample_data_holder_2:
+        time.increment(time_millis - previous_time)
+        previous_time = time_millis
+        percentile.add_value(latency)
+
+    print('0.01', percentile.percentile(0.01))
+    print('Median', percentile.percentile(50))
+    print('90th', percentile.percentile(90))
+    print('99th', percentile.percentile(99))
+    print('99.5th', percentile.percentile(99.5))
+    print('99.99', percentile.percentile(99.99))
+
+    percentile50 = percentile.percentile(50)
+    if percentile50 > 50 or percentile50 < 50:
+        pytest.fail('We expect around 60-70 but got: {}'.format(percentile50))
+
+    percentile99 = percentile.percentile(99)
+    if percentile99 < 400:
+        msg = 'We expect to see some high values over 400 but got: {}'
+        pytest.fail(msg.format(percentile99))

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from multiprocessing import RLock
+import itertools
 import logging
 import time
 import math
@@ -11,7 +12,8 @@ log = logging.getLogger(__name__)
 
 class RollingPercentile(object):
 
-    def __init__(self, _time, milliseconds, bucket_numbers, bucket_data_length, enabled):
+    def __init__(self, _time, milliseconds, bucket_numbers,
+                 bucket_data_length, enabled):
         self.time = _time
         self.milliseconds = milliseconds
         self.buckets = BucketCircular(bucket_numbers)
@@ -103,6 +105,7 @@ class PercentileBucketData(object):
     def __init__(self, data_length):
         self.length = data_length
         self.list = []
+        self.index = itertools.count()
 
     def add_value(self, *latencies):
         for latency in latencies:
