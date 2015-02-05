@@ -101,7 +101,6 @@ def test_sample_data_over_time_1():
     for time_millis, latency in sample_data_holder_1:
         time.increment(time_millis - previous_time)
         previous_time = time_millis
-        import ipdb; ipdb.set_trace()  # Breakpoint
         percentile.add_value(latency)
 
     print('0.01', percentile.percentile(0.01))
@@ -110,6 +109,10 @@ def test_sample_data_over_time_1():
     print('99th', percentile.percentile(99))
     print('99.5th', percentile.percentile(99.5))
     print('99.99', percentile.percentile(99.99))
+
+    print('Median', percentile.percentile(50))
+    print('Median', percentile.percentile(50))
+    print('Median', percentile.percentile(50))
 
     # In a loop as a use case was found where very different values were
     # calculated in subsequent requests.

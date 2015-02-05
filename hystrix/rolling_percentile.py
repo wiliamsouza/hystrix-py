@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from multiprocessing import RLock
+from multiprocessing import RLock, Array
 import itertools
 import logging
 import time
@@ -103,23 +103,34 @@ class Bucket(object):
 class PercentileBucketData(object):
 
     def __init__(self, data_length):
-        self.length = data_length
-        self.list = []
+        self.data_length = data_length
+        self.list = Array('i', self.data_length, lock=RLock())
+        # TODO: Change this to use a generator
         self.index = itertools.count()
+        self.number = 0
 
     def add_value(self, *latencies):
+        # We just wrap around the beginning and over-write if we go past
+        # 'data_length' as that will effectively cause us to "sample" the
+        # most recent data
         for latency in latencies:
-            self.list.append(latency)
+            self.number = next(self.index)
+            self.list[self.number % self.data_length] = latency
+            self.number = self.number + 1
 
     def length(self):
-        return len(self.list)
+        if self.number  > len(self.list):
+            return len(self.list)
+        else:
+            return self.number
 
 
 class PercentileSnapshot(object):
 
     def __init__(self, *args):
-        self.data = []
+        self.data = Array('i', 0, lock=RLock())
         self._mean = 0
+        self.length = 0
 
         if isinstance(args[0], int):
             self.data = list(args)
@@ -133,21 +144,30 @@ class PercentileSnapshot(object):
             self._mean = _sum / self.length
 
         elif isinstance(args[0], Bucket):
+            self.length_from_buckets = 0
             self.buckets = args
+            for bucket in self.buckets:
+                self.length_from_buckets += bucket.data.data_length
+
+            self.data = Array('i', self.length_from_buckets, lock=RLock())
             _sum = 0
+            index = 0
             for bucket in self.buckets:
                 pbd = bucket.data
-                self.data.extend(pbd.list)
-                for l in pbd.list:
-                    _sum += l
+                length = pbd.length()
+                for i in range(length):
+                    v = pbd.list[i]
+                    self.data[i] = v
+                    index += 1
+                    _sum += v
 
-            self.length = len(pbd.list)
+            self.length = index
             if self.length == 0:
                 self._mean = 0
             else:
                 self._mean = _sum / self.length
 
-        self.data.sort()
+            # self.data = Array('i', sorted(self.data), lock=RLock())
 
     def percentile(self, percentile):
         if not self.length:

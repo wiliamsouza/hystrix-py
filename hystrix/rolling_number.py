@@ -206,6 +206,8 @@ class LongAdder(object):
 
     def __init__(self, min_value=0):
         self.count = Value('i', min_value)
+        # TODO: What is best it or get lock direct from self.count
+        # as described in multiprocessing.Value doc.
         self.lock = Lock()
 
     def increment(self):
@@ -229,6 +231,8 @@ class LongMaxUpdater(object):
 
     def __init__(self, min_value=0):
         self.count = Value('i', min_value)
+        # TODO: What is best it or get lock direct from self.count
+        # as described in multiprocessing.Value doc.
         self.lock = Lock()
 
     def max(self):
