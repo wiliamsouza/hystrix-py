@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from multiprocessing import RLock, Array
-from collections import deque
 import itertools
 import logging
 import time
