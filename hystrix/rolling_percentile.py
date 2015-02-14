@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from multiprocessing import RLock, Array
+from collections import deque
 import itertools
 import logging
 import time
 import math
 
 from hystrix.rolling_number import BucketCircular
+
 
 log = logging.getLogger(__name__)
 
@@ -91,6 +93,17 @@ class RollingPercentile(object):
     def current_percentile_snapshot(self):
         return self.snapshot
 
+    def mean(self):
+        if not self.enabled:
+            return -1
+
+        # Force logic to move buckets forward in case other requests aren't
+        # making it happen
+        self.current_bucket()
+
+        # Fetch the current snapshot
+        return self.current_percentile_snapshot().mean()
+
 
 class Bucket(object):
     ''' Counters for a given 'bucket' of time. '''
@@ -119,7 +132,7 @@ class PercentileBucketData(object):
             self.number = self.number + 1
 
     def length(self):
-        if self.number  > len(self.list):
+        if self.number > len(self.list):
             return len(self.list)
         else:
             return self.number
@@ -142,6 +155,8 @@ class PercentileSnapshot(object):
                 _sum += d
 
             self._mean = _sum / self.length
+            self.data = Array('i', sorted(sorted(self.data), key=bool,
+                                          reverse=True), lock=RLock())
 
         elif isinstance(args[0], Bucket):
             self.length_from_buckets = 0
@@ -157,7 +172,7 @@ class PercentileSnapshot(object):
                 length = pbd.length()
                 for i in range(length):
                     v = pbd.list[i]
-                    self.data[i] = v
+                    self.data[index] = v
                     index += 1
                     _sum += v
 
@@ -167,16 +182,17 @@ class PercentileSnapshot(object):
             else:
                 self._mean = _sum / self.length
 
-            # self.data = Array('i', sorted(self.data), lock=RLock())
+            self.data = Array('i', sorted(sorted(self.data), key=bool,
+                                          reverse=True), lock=RLock())
 
     def percentile(self, percentile):
-        if not self.length:
+        if self.length == 0:
             return 0
 
         return self.compute_percentile(percentile)
 
     def compute_percentile(self, percent):
-        if not self.length:
+        if self.length <= 0:
             return 0
         elif percent <= 0.0:
             return self.data[0]
