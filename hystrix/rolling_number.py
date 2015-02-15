@@ -11,21 +11,34 @@ log = logging.getLogger(__name__)
 
 
 class RollingNumber(object):
-    ''' A number which can be used to track counters (increment) or set values
-        over time.
+    """ A **number** which can be used to track **counters** (increment) or set
+    values over time.
 
-    It is "rolling" in the sense that a 'milliseconds' is given that you
-    want to track (such as 10 seconds) and then that is broken into
-    buckets (defaults to 10) so that the 10 second window doesn't empty
-    out and restart every 10 seconds, but instead every 1 second you have
-    a new bucket added and one dropped so that 9 of the buckets remain
-    and only the newest starts from scratch.
+    It is *rolling* in the sense that a :attr:`milliseconds` is
+    given that you want to track (such as 10 seconds) and then that is broken
+    into **buckets** (defaults to 10) so that the 10 second window doesn't
+    empty out and restart every 10 seconds, but instead every 1 second you
+    have a new :class:`Bucket` added and one dropped so that 9 of the buckets
+    remain and only the newest starts from scratch.
 
-    This is done so that the statistics are gathered over a rolling 10
+    This is done so that the statistics are gathered over a *rolling* 10
     second window with data being added/dropped in 1 second intervals
     (or whatever granularity is defined by the arguments) rather than
     each 10 second window starting at 0 again.
-    '''
+
+    Performance-wise this class is optimized for writes, not reads. This is
+    done because it expects far higher write volume (thousands/second) than
+    reads (a few per second).
+
+    For example, on each read to getSum/getCount it will iterate buckets to
+    sum the data so that on writes we don't need to maintain the overall sum
+    and pay the synchronization cost at each write to ensure the sum is
+    up-to-date when the read can easily iterate each bucket to get the sum
+    when it needs it.
+
+    See test module :mod:`tests.test_rolling_number` for usage and expected
+    behavior examples.
+    """
 
     def __init__(self, _time, milliseconds, bucket_numbers):
         self.time = _time
@@ -44,15 +57,87 @@ class RollingNumber(object):
         return self.milliseconds / self.bucket_numbers
 
     def increment(self, event):
+        """ Increment the **counter** in the current bucket by one for the
+        given :class:`RollingNumberEvent` type.
+
+
+        The :class:`RollingNumberEvent` must be a **counter** type
+
+            >>> RollingNumberEvent.isCounter()
+            True
+
+        Args:
+            event (:class:`RollingNumberEvent`): Event defining which
+                **counter** to increment.
+        """
         self.current_bucket().adder(event).increment()
 
     def update_rolling_max(self, event, value):
+        """ Update a value and retain the max value.
+
+        The :class:`RollingNumberEvent` must be a **max updater** type
+
+            >>> RollingNumberEvent.isMaxUpdater()
+            True
+
+        Args:
+            value (int): Max value to update.
+            event (:class:`RollingNumberEvent`): Event defining which
+                **counter** to increment.
+
+        """
         self.current_bucket().max_updater(event).update(value)
 
     def current_bucket(self):
-        current_time = self.time.current_time_in_millis()
-        current_bucket = self.buckets.peek_last()
+        """ Retrieve the current :class:`Bucket`
 
+        Retrieve the latest :class:`Bucket` if the given time is **BEFORE**
+        the end of the **bucket** window, otherwise it returns ``None``.
+
+        The following needs to be synchronized/locked even with a
+        synchronized/thread-safe data structure such as LinkedBlockingDeque
+        because the logic involves multiple steps to check existence,
+        create an object then insert the object. The 'check' or 'insertion'
+        themselves are thread-safe by themselves but not the aggregate
+        algorithm, thus we put this entire block of logic inside
+        synchronized.
+
+        I am using a :class:`multiprocessing.RLock` if/then
+        so that a single thread will get the lock and as soon as one thread
+        gets the lock all others will go the 'else' block and just return
+        the currentBucket until the newBucket is created. This should allow
+        the throughput to be far higher and only slow down 1 thread instead
+        of blocking all of them in each cycle of creating a new bucket based
+        on some testing (and it makes sense that it should as well).
+
+        This means the timing won't be exact to the millisecond as to what
+        data ends up in a bucket, but that's acceptable. It's not critical
+        to have exact precision to the millisecond, as long as it's rolling,
+        if we can instead reduce the impact synchronization.
+
+        More importantly though it means that the 'if' block within the
+        lock needs to be careful about what it changes that can still
+        be accessed concurrently in the 'else' block since we're not
+        completely synchronizing access.
+
+        For example, we can't have a multi-step process to add a bucket,
+        remove a bucket, then update the sum since the 'else' block of code
+        can retrieve the sum while this is all happening. The trade-off is
+        that we don't maintain the rolling sum and let readers just iterate
+        bucket to calculate the sum themselves. This is an example of
+        favoring write-performance instead of read-performance and how the
+        tryLock versus a synchronized block needs to be accommodated.
+
+        Returns:
+            bucket: Returns the latest :class:`Bucket` or ``None``.
+        """
+
+        # TODO: Check the doc string above^.
+        current_time = self.time.current_time_in_millis()
+
+        # a shortcut to try and get the most common result of immediately
+        # finding the current bucket
+        current_bucket = self.buckets.peek_last()
         if current_bucket is not None and current_time < (current_bucket.window_start + self.buckets_size_in_milliseconds()):
             return current_bucket
 
@@ -90,6 +175,13 @@ class RollingNumber(object):
             self.current_bucket()
 
     def reset(self):
+        """ Reset all rolling **counters**
+
+        Force a reset of all rolling **counters** (clear all **buckets**) so
+        that statistics start being gathered from scratch.
+
+        This does NOT reset the :class:`CumulativeSum` values.
+        """
         last_bucket = self.buckets.peek_last()
         if last_bucket:
             self.cumulative_sum.add_bucket(last_bucket)
@@ -162,7 +254,15 @@ class BucketCircular(deque):
 
 
 class Bucket(object):
-    ''' Counters for a given 'bucket' of time. '''
+    """ Counters for a given :class:`Bucket` of time
+
+    We support both :class:`LongAdder` and :class:`LongMaxUpdater` in a
+    :class:`Bucket` but don't want the memory allocation of all types for each
+    so we only allocate the objects if the :class:`RollingNumberEvent` matches
+    the correct **type** - though we still have the allocation of empty arrays
+    to the given length as we want to keep using the **type** value for fast
+    random access.
+    """
 
     def __init__(self, start_time):
         self.window_start = start_time
@@ -343,19 +443,24 @@ class EventMetaclass(type):
 
 
 class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
-    ''' Various states/events that can be captured in the RollingNumber.
+    """ Various states/eveents that can be captured in the
+    :class:`RollingNumber`.
 
     Note that events are defined as different types:
 
-    * Counter: is_counter() == true
-    * MaxUpdater: is_max_updater() == true
+        >>> self.is_counter() == True
+        True
 
-    The Counter type events can be used with RollingNumber#increment,
-    RollingNumber#add, RollingNumber#getRollingSum} and others.
+        >>> self.is_max_updater() == True
+        True
 
-    The MaxUpdater type events can be used with RollingNumber#updateRollingMax
-    and RollingNumber#getRollingMaxValue.
-    '''
+    The `Counter` type events can be used with :meth:`RollingNumber.increment`,
+    :meth:`RollingNumber.add`, :meth:`RollingNumber.getRollingSum` and others.
+
+    The `MaxUpdater` type events can be used with
+    :meth:`RollingNumber.updateRollingMax` and
+    :meth:`RollingNumber.getRollingMaxValue`.
+    """
 
     SUCCESS = 1
     FAILURE = 1

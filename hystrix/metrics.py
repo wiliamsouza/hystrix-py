@@ -1,3 +1,4 @@
+''' Used by :class:`hystrix.command.HystrixCommand` to record metrics.'''
 from __future__ import absolute_import
 import logging
 

@@ -11,7 +11,6 @@ class HelloCommand(Command):
 class FallbackCommand(Command):
     def run(self):
         raise RuntimeError('This command always fails')
-        return 'Hello Run'
 
     def fallback(self):
         return 'Hello Fallback'
@@ -20,11 +19,9 @@ class FallbackCommand(Command):
 class CacheCommand(Command):
     def run(self):
         raise RuntimeError('This command always fails')
-        return 'Hello Run'
 
     def fallback(self):
         raise RuntimeError('This command always fails')
-        return 'Hello Fallback'
 
     def cache(self):
         return 'Hello Cache'

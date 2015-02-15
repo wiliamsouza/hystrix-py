@@ -1,3 +1,9 @@
+"""
+Used to wrap code that will execute potentially risky functionality
+(typically meaning a service call over the network) with fault and latency
+tolerance, statistics and performance metrics capture, circuit breaker and
+bulkhead functionality.
+"""
 from __future__ import absolute_import
 import logging
 
