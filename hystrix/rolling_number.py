@@ -205,7 +205,7 @@ class RollingNumber(object):
                 to retrieve values from.
 
         Returns:
-            long: Return value from the given :class:`RolingNumberEvent`
+            long: Return value from the given :class:`RollingNumberEvent`
                 counter type.
         """
         last_bucket = self.current_bucket()
@@ -250,7 +250,7 @@ class RollingNumber(object):
         The cumulative sum of all buckets ever since the start without
         rolling for the given :class`RollingNumberEvent` type.
 
-        See :meth:`get_rolling_sum` for the rolling sum.
+        See :meth:`rolling_sum` for the rolling sum.
 
         The :class:`RollingNumberEvent` must be a **counter** type
 
