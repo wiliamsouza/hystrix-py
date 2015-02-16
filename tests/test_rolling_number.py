@@ -287,7 +287,7 @@ def test_update_max_1():
     assert counter.buckets.last().max_updater(RollingNumberEvent.THREAD_MAX_ACTIVE).max() == 20
 
     # Count per buckets
-    values = counter.get_values(RollingNumberEvent.THREAD_MAX_ACTIVE)
+    values = counter.values(RollingNumberEvent.THREAD_MAX_ACTIVE)
     assert values[0] == 20  # Latest bucket
     assert values[1] == 0
     assert values[2] == 0
@@ -329,7 +329,7 @@ def test_update_max_2():
     assert counter.value_of_latest_bucket(RollingNumberEvent.THREAD_MAX_ACTIVE) == 50
 
     # Values per buckets
-    values = counter.get_values(RollingNumberEvent.THREAD_MAX_ACTIVE)
+    values = counter.values(RollingNumberEvent.THREAD_MAX_ACTIVE)
     assert values[0] == 50  # Latest bucket
     assert values[1] == 0
     assert values[2] == 0
@@ -396,14 +396,14 @@ def test_rolling():
     counter = RollingNumber(time, 20, 2)
     event = RollingNumberEvent.THREAD_MAX_ACTIVE
 
-    assert counter.get_cumulative_sum(event) == 0
+    assert counter.cumulative_sum(event) == 0
 
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
         counter.current_bucket()
         time.increment(counter.buckets_size_in_milliseconds())
 
-        assert len(counter.get_values(event)) == 2
+        assert len(counter.values(event)) == 2
 
         counter.value_of_latest_bucket(event)
 
@@ -413,20 +413,20 @@ def test_cumulative_counter_after_rolling():
     counter = RollingNumber(time, 20, 2)
     event = RollingNumberEvent.SUCCESS
 
-    assert counter.get_cumulative_sum(event) == 0
+    assert counter.cumulative_sum(event) == 0
 
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
         counter.increment(event)
         time.increment(counter.buckets_size_in_milliseconds())
 
-        assert len(counter.get_values(event)) == 2
+        assert len(counter.values(event)) == 2
 
         counter.value_of_latest_bucket(event)
 
     # Cumulative count should be 20 (for the number of loops above) regardless
     # of buckets rolling
-    assert counter.get_cumulative_sum(event) == 20
+    assert counter.cumulative_sum(event) == 20
 
 
 def test_cumulative_counter_after_rolling_and_reset():
@@ -434,14 +434,14 @@ def test_cumulative_counter_after_rolling_and_reset():
     counter = RollingNumber(time, 20, 2)
     event = RollingNumberEvent.SUCCESS
 
-    assert counter.get_cumulative_sum(event) == 0
+    assert counter.cumulative_sum(event) == 0
 
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
         counter.increment(event)
         time.increment(counter.buckets_size_in_milliseconds())
 
-        assert len(counter.get_values(event)) == 2
+        assert len(counter.values(event)) == 2
 
         counter.value_of_latest_bucket(event)
 
@@ -452,7 +452,7 @@ def test_cumulative_counter_after_rolling_and_reset():
 
     # Cumulative count should be 20 (for the number of loops above) regardless
     # of buckets rolling
-    assert counter.get_cumulative_sum(event) == 20
+    assert counter.cumulative_sum(event) == 20
 
 
 def test_cumulative_counter_after_rolling_and_reset2():
@@ -460,7 +460,7 @@ def test_cumulative_counter_after_rolling_and_reset2():
     counter = RollingNumber(time, 20, 2)
     event = RollingNumberEvent.SUCCESS
 
-    assert counter.get_cumulative_sum(event) == 0
+    assert counter.cumulative_sum(event) == 0
 
     counter.increment(event)
     counter.increment(event)
@@ -480,7 +480,7 @@ def test_cumulative_counter_after_rolling_and_reset2():
     counter.increment(event)
 
     # Cumulative count should be 5 regardless of buckets rolling
-    assert counter.get_cumulative_sum(event) == 5
+    assert counter.cumulative_sum(event) == 5
 
 
 def test_cumulative_counter_after_rolling_and_reset3():
@@ -488,7 +488,7 @@ def test_cumulative_counter_after_rolling_and_reset3():
     counter = RollingNumber(time, 20, 2)
     event = RollingNumberEvent.SUCCESS
 
-    assert counter.get_cumulative_sum(event) == 0
+    assert counter.cumulative_sum(event) == 0
 
     counter.increment(event)
     counter.increment(event)
@@ -505,7 +505,7 @@ def test_cumulative_counter_after_rolling_and_reset3():
     counter.increment(event)
 
     # Cumulative count should be 5 regardless of buckets rolling
-    assert counter.get_cumulative_sum(event) == 5
+    assert counter.cumulative_sum(event) == 5
 
 
 def test_milliseconds_buckets_size_error():

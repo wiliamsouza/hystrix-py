@@ -40,12 +40,13 @@ class RollingNumber(object):
     behavior examples.
     """
 
+    # TODO: Change _time to be optional(update all tests:( )
     def __init__(self, _time, milliseconds, bucket_numbers):
         self.time = _time
         self.milliseconds = milliseconds
         self.buckets = BucketCircular(bucket_numbers)
         self.bucket_numbers = bucket_numbers
-        self.cumulative_sum = CumulativeSum()
+        self.cumulative = CumulativeSum()
         self._new_bucket_lock = RLock()
 
         if self.milliseconds % self.bucket_numbers != 0:
@@ -158,7 +159,7 @@ class RollingNumber(object):
                         return self.current_bucket()
                     else:
                         self.buckets.add_last(Bucket(last_bucket.window_start + self.buckets_size_in_milliseconds()))
-                        self.cumulative_sum.add_bucket(last_bucket)
+                        self.cumulative.add_bucket(last_bucket)
 
                 return self.buckets.peek_last()
 
@@ -184,11 +185,29 @@ class RollingNumber(object):
         """
         last_bucket = self.buckets.peek_last()
         if last_bucket:
-            self.cumulative_sum.add_bucket(last_bucket)
+            self.cumulative.add_bucket(last_bucket)
 
         self.buckets.clear()
 
     def rolling_sum(self, event):
+        """ Rolling sum
+
+        Get the sum of all buckets in the rolling counter for the given
+        :class:`RollingNumberEvent`.
+
+        The :class:`RollingNumberEvent` must be a **counter** type
+
+            >>> RollingNumberEvent.isCounter()
+            True
+
+        Args:
+            event (:class:`RollingNumberEvent`): Event defining which counter
+                to retrieve values from.
+
+        Returns:
+            long: Return value from the given :class:`RolingNumberEvent`
+                counter type.
+        """
         last_bucket = self.current_bucket()
         if not last_bucket:
             return 0
@@ -199,14 +218,13 @@ class RollingNumber(object):
         return sum
 
     def rolling_max(self, event):
-        values = self.get_values(event)
+        values = self.values(event)
         if not values:
             return 0
         else:
             return values[len(values) - 1]
 
-    # TODO: Rename to values
-    def get_values(self, event):
+    def values(self, event):
         last_bucket = self.current_bucket()
         if not last_bucket:
             return 0
@@ -226,8 +244,30 @@ class RollingNumber(object):
 
         return last_bucket.get(event)
 
-    def get_cumulative_sum(self, event):
-        return self.value_of_latest_bucket(event) + self.cumulative_sum.get(event)
+    def cumulative_sum(self, event):
+        """ Cumulative sum
+
+        The cumulative sum of all buckets ever since the start without
+        rolling for the given :class`RollingNumberEvent` type.
+
+        See :meth:`get_rolling_sum` for the rolling sum.
+
+        The :class:`RollingNumberEvent` must be a **counter** type
+
+            >>> RollingNumberEvent.isCounter()
+            True
+
+        Args:
+            event (:class:`RollingNumberEvent`): Event defining which
+                **counter** to increment.
+
+        Returns:
+            long: Returns the cumulative sum of all **increments** and
+                **adds** for the given :class:`RollingNumberEvent` **counter**
+                type.
+
+        """
+        return self.value_of_latest_bucket(event) + self.cumulative.get(event)
 
 
 class BucketCircular(deque):
@@ -454,12 +494,13 @@ class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
         >>> self.is_max_updater() == True
         True
 
-    The `Counter` type events can be used with :meth:`RollingNumber.increment`,
-    :meth:`RollingNumber.add`, :meth:`RollingNumber.getRollingSum` and others.
+    The **counter** type events can be used with
+    :meth:`RollingNumber.increment`, :meth:`RollingNumber.add`,
+    :meth:`RollingNumber.rolling_sum` and others.
 
-    The `MaxUpdater` type events can be used with
-    :meth:`RollingNumber.updateRollingMax` and
-    :meth:`RollingNumber.getRollingMaxValue`.
+    The **max updater** type events can be used with
+    :meth:`RollingNumber.update_rolling_max` and
+    :meth:`RollingNumber.rolling_max_value`.
     """
 
     SUCCESS = 1
@@ -481,7 +522,19 @@ class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
         self._event = event
 
     def is_counter(self):
+        """ Is counter
+
+        Returns:
+            bool: Returns ``True`` event type is **counter**, otherwise
+                it returns ``False`` .
+        """
         return self._event.value == 1
 
     def is_max_updater(self):
+        """ Is mas updater
+
+        Returns:
+            bool: Returns ``True`` event type is **max updater**, otherwise
+                it returns ``False`` .
+        """
         return self._event.value == 2
