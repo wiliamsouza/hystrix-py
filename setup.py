@@ -11,7 +11,7 @@ here = path.abspath(path.dirname(__file__))
 setup_requires = ['pytest', 'tox']
 install_requires = ['six', 'tox']
 dev_requires = ['pyflakes', 'pep8', 'pylint', 'check-manifest',
-                'ipython', 'ipdb', 'sphnix', 'sphinx_rtd_theme',
+                'ipython', 'ipdb', 'sphinx', 'sphinx_rtd_theme',
                 'sphinxcontrib-napoleon']
 tests_require = ['pytest-cov', 'pytest-cache', 'pytest-timeout']
 
