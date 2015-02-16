@@ -1,1 +1,7 @@
 include README.md
+include AUTHORS
+include LICENSE
+include Makefile
+include tox.ini
+recursive-include docs/
+recursive-include tests/
