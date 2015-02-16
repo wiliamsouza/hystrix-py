@@ -8,7 +8,7 @@ from setuptools.command.test import test as TestCommand
 
 here = path.abspath(path.dirname(__file__))
 
-setup_requires = ['pytest', 'tox']
+setup_requires = ['pytest', 'tox', 'six']
 install_requires = ['six', 'tox']
 dev_requires = ['pyflakes', 'pep8', 'pylint', 'check-manifest',
                 'ipython', 'ipdb', 'sphinx', 'sphinx_rtd_theme',
