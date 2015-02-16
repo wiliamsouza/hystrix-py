@@ -4,6 +4,7 @@ hystrix-py
 [![Build Status](https://travis-ci.org/wiliamsouza/hystrix-py.svg)
 ](https://travis-ci.org/wiliamsouza/hystrix-py)
 [![Coverage Status](https://img.shields.io/coveralls/wiliamsouza/hystrix-py.svg)](https://coveralls.io/r/wiliamsouza/hystrix-py)
+[![Documentation Status](https://readthedocs.org/projects/hystrix-py/badge/?version=latest)](https://readthedocs.org/projects/hystrix-py/?badge=latest)
 
 A Netflix Hystrix implementation in Python.
 
