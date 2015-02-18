@@ -91,13 +91,11 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
     """
     __command_metrics_name__ = None
 
-    # def __init__(self, command_key, command_group, properties,
-    #             event_notifier):
-    def __init__(self):
-        # self.properties = properties
-        # counter = RollingNumber(self.properties.milliseconds,
-        #                        self.properties.bucket_numbers)
-        super(CommandMetrics, self).__init__(None)  # use counter here
+    def __init__(self, command_key, command_group, properties, event_notifier):
+        self.properties = properties
+        counter = RollingNumber(self.properties.milliseconds,
+                                self.properties.bucket_numbers)
+        super(CommandMetrics, self).__init__(counter)
 
 
 class ExecutorMetricsMetaclass(type):
