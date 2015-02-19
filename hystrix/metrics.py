@@ -92,9 +92,8 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
     __command_metrics_name__ = None
 
     def __init__(self, command_name, command_group, properties, event_notifier):
-        self.properties = properties
-        counter = RollingNumber(self.properties.milliseconds,
-                                self.properties.bucket_numbers)
+        counter = RollingNumber(properties.metrics_rolling_statistical_window_in_milliseconds(),
+                                properties.metrics_rolling_statistical_window_buckets())
         super(CommandMetrics, self).__init__(counter)
 
 
