@@ -50,6 +50,7 @@ class Metrics(object):
         return self.counter.rolling_sum(event)
 
 
+# TODO: Move this to command_metrics.py
 class CommandMetricsMetaclass(type):
     """ Metaclass for :class:`CommandMetrics`
 
@@ -86,6 +87,7 @@ class CommandMetricsMetaclass(type):
         return cls.__instances__[class_name]
 
 
+# TODO: Move this to command_metrics.py
 class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
     """ Command metrics
     """
@@ -97,6 +99,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         super(CommandMetrics, self).__init__(counter)
 
 
+# TODO: Move this to executor_metrics.py
 class ExecutorMetricsMetaclass(type):
 
     __instances__ = dict()
@@ -121,11 +124,13 @@ class ExecutorMetricsMetaclass(type):
         return cls.__instances__[class_name]
 
 
+# TODO: Move this to executor_metrics.py
 class ExecutorMetrics(six.with_metaclass(ExecutorMetricsMetaclass, object)):
 
     __executor_metrics_name__ = None
 
 
+# TODO: Move this to health_counts.py
 class HealthCounts(object):
     """ Number of requests during rolling window.
 

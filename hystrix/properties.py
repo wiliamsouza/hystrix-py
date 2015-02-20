@@ -4,6 +4,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
+# TODO: Move this to command_properties.py
 class CommandProperties(object):
     """ Properties for instances of :class:`hystrix.command.Command`
     """
@@ -78,8 +79,8 @@ class CommandProperties(object):
     # (error percentage etc)
     default_metrics_health_snapshot_interval_in_milliseconds = 500
 
-    def __init__(self, key, setter, property_prefix):
-        self.command_key = key
+    def __init__(self, command_key, setter, property_prefix):
+        self.command_key = command_key
         self.property_prefix = property_prefix
 
         # Whether circuit breaker should be enabled
@@ -143,7 +144,7 @@ class CommandProperties(object):
         # Timeout value in milliseconds for a command
         self._execution_timeout_in_milliseconds = \
             self._property(
-                self.property_prefix, key,
+                self.property_prefix, self.command_key,
                 'execution.isolation.thread.timeout_in_milliseconds',
                 setter.execution_timeout_in_milliseconds(),
                 self.default_execution_timeout_in_milliseconds)
@@ -508,12 +509,14 @@ class CommandProperties(object):
         """
         return self._request_log_enabled
 
-    # TODO: Fix self for now it just return default values
+    # TODO: Fix this for now it just return default values
     def _property(self, property_prefix, command_key, instance_property,
                   setter_override_value, default_value):
         """ Get property from a networked plugin
         """
-        return default_value
+
+        # The setter override should take precedence over default_value
+        return setter_override_value or default_value
 
     @classmethod
     def setter(klass):
@@ -620,85 +623,85 @@ class CommandProperties(object):
             return self._request_log_enabled
 
         def with_circuit_breaker_enabled(self, value):
-            self.circuit_breaker_enabled = value
+            self._circuit_breaker_enabled = value
             return self
 
         def with_circuit_breaker_error_threshold_percentage(self, value):
-            self.circuit_breaker_error_threshold_percentage = value
+            self._circuit_breaker_error_threshold_percentage = value
             return self
 
         def with_circuit_breaker_force_closed(self, value):
-            self.circuit_breaker_force_closed = value
+            self._circuit_breaker_force_closed = value
             return self
 
         def with_circuit_breaker_force_open(self, value):
-            self.circuit_breaker_force_open = value
+            self._circuit_breaker_force_open = value
             return self
 
         def with_circuit_breaker_request_volume_threshold(self, value):
-            self.circuit_breaker_request_volume_threshold = value
+            self._circuit_breaker_request_volume_threshold = value
             return self
 
         def with_circuit_breaker_sleep_window_in_milliseconds(self, value):
-            self.circuit_breaker_sleep_window_in_milliseconds = value
+            self._circuit_breaker_sleep_window_in_milliseconds = value
             return self
 
         def with_execution_isolation_semaphore_max_concurrent_requests(self, value):
-            self.execution_isolation_semaphore_max_concurrent_requests = value
+            self._execution_isolation_semaphore_max_concurrent_requests = value
             return self
 
         def with_execution_isolation_strategy(self, value):
-            self.execution_isolation_strategy = value
+            self._execution_isolation_strategy = value
             return self
 
         def with_execution_isolation_thread_interrupt_on_timeout(self, value):
-            self.execution_isolation_thread_interrupt_on_timeout = value
+            self._execution_isolation_thread_interrupt_on_timeout = value
             return self
 
         def with_execution_timeout_in_milliseconds(self, value):
-            self.execution_timeout_in_milliseconds = value
+            self._execution_timeout_in_milliseconds = value
             return self
 
         def with_fallback_isolation_semaphore_max_concurrent_requests(self, value):
-            self.fallback_isolation_semaphore_max_concurrent_requests = value
+            self._fallback_isolation_semaphore_max_concurrent_requests = value
             return self
 
         def with_fallback_enabled(self, value):
-            self.fallback_enabled = value
+            self._fallback_enabled = value
             return self
 
         def with_metrics_health_snapshot_interval_in_milliseconds(self, value):
-            self.metrics_health_snapshot_interval_in_milliseconds = value
+            self._metrics_health_snapshot_interval_in_milliseconds = value
             return self
 
         def with_metrics_rolling_percentile_bucket_size(self, value):
-            self.metrics_rolling_percentile_bucket_size = value
+            self._metrics_rolling_percentile_bucket_size = value
             return self
 
         def with_metrics_rolling_percentile_enabled(self, value):
-            self.metrics_rolling_percentile_enabled = value
+            self._metrics_rolling_percentile_enabled = value
             return self
 
         def with_metrics_rolling_percentile_window_in_milliseconds(self, value):
-            self.metrics_rolling_percentile_window_in_milliseconds = value
+            self._metrics_rolling_percentile_window_in_milliseconds = value
             return self
 
         def with_metrics_rolling_percentile_window_buckets(self, value):
-            self.metrics_rolling_percentile_window_buckets = value
+            self._metrics_rolling_percentile_window_buckets = value
             return self
 
         def with_metrics_rolling_statistical_window_in_milliseconds(self, value):
-            self.metrics_rolling_statistical_window_in_milliseconds = value
+            self._metrics_rolling_statistical_window_in_milliseconds = value
             return self
 
         def with_metrics_rolling_statistical_window_buckets(self, value):
-            self.metrics_rolling_statistical_window_buckets = value
+            self._metrics_rolling_statistical_window_buckets = value
             return self
 
         def with_request_cache_enabled(self, value):
-            self.request_cache_enabled = value
+            self._request_cache_enabled = value
             return self
 
         def with_request_log_enabled(self, value):
-            self.request_log_enabled = value
+            self._request_log_enabled = value
             return self
