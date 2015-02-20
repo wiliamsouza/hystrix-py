@@ -41,8 +41,8 @@ class RollingNumber(object):
     """
 
     # TODO: Change _time to be optional(update all tests:( )
-    def __init__(self, _time, milliseconds, bucket_numbers):
-        self.time = _time
+    def __init__(self, milliseconds, bucket_numbers, _time=None):
+        self.time = _time or None  # Create a instance of time here
         self.milliseconds = milliseconds
         self.buckets = BucketCircular(bucket_numbers)
         self.bucket_numbers = bucket_numbers
