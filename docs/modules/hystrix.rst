@@ -11,6 +11,8 @@ Submodules
    hystrix.executor
    hystrix.group
    hystrix.metrics
+   hystrix.command_metrics
+   hystrix.executor_metrics
    hystrix.properties
    hystrix.rolling_number
    hystrix.rolling_percentile
