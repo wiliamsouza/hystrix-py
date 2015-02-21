@@ -42,7 +42,7 @@ class RollingNumber(object):
 
     # TODO: Change _time to be optional(update all tests:( )
     def __init__(self, milliseconds, bucket_numbers, _time=None):
-        self.time = _time or None  # Create a instance of time here
+        self.time = _time or ActualTime()  # Create a instance of time here
         self.milliseconds = milliseconds
         self.buckets = BucketCircular(bucket_numbers)
         self.bucket_numbers = bucket_numbers
@@ -482,6 +482,7 @@ class EventMetaclass(type):
         return new_class
 
 
+# TODO: Move this to hystri/util/rolling_number_event.py
 class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
     """ Various states/eveents that can be captured in the
     :class:`RollingNumber`.
@@ -538,3 +539,16 @@ class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
                 it returns ``False`` .
         """
         return self._event.value == 2
+
+
+class ActualTime(object):
+    """ Actual time
+    """
+
+    def current_time_in_millis(self):
+        """ Current time in milliseconds
+
+        Returns:
+            int: Returns :func:`time.time()` converted to milliseconds
+        """
+        return int(round(time.time() * 1000))

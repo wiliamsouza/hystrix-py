@@ -2,7 +2,8 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 
-from .metrics import CommandMetrics, ExecutorMetrics
+from .command_metrics import CommandMetrics
+from .executor_metrics import ExecutorMetrics
 from .executor import Executor
 from .command import Command
 from .group import Group
