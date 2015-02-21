@@ -1,5 +1,5 @@
 from hystrix.command_metrics import CommandMetrics
-from hystrix.properties import CommandProperties
+from hystrix.command_properties import CommandProperties
 
 setter = CommandProperties.setter()
 properties = CommandProperties('TEST', setter, 'unit_test_prefix')

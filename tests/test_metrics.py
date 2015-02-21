@@ -1,5 +1,5 @@
 from hystrix.metrics import Metrics
-from hystrix.properties import CommandProperties
+from hystrix.command_properties import CommandProperties
 from hystrix.rolling_number import RollingNumber, RollingNumberEvent
 
 setter = CommandProperties.setter()

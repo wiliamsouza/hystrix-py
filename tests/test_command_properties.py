@@ -1,4 +1,4 @@
-from hystrix.properties import CommandProperties
+from hystrix.command_properties import CommandProperties
 
 
 # Utility method for creating baseline properties for unit tests.

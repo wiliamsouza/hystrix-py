@@ -4,7 +4,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-# TODO: Move this to command_properties.py
 class CommandProperties(object):
     """ Properties for instances of :class:`hystrix.command.Command`
     """
