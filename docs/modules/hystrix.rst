@@ -1,6 +1,13 @@
 hystrix package
 ===============
 
+Subpackages
+-----------
+
+.. toctree::
+
+    hystrix.strategy
+
 Submodules
 ----------
 
@@ -8,12 +15,13 @@ Submodules
 
    hystrix.circuitbreaker
    hystrix.command
+   hystrix.command_metrics
+   hystrix.command_properties
+   hystrix.event_type
    hystrix.executor
+   hystrix.executor_metrics
    hystrix.group
    hystrix.metrics
-   hystrix.command_metrics
-   hystrix.executor_metrics
-   hystrix.properties
    hystrix.rolling_number
    hystrix.rolling_percentile
 

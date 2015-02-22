@@ -6,18 +6,13 @@
 Welcome to Hystrix Python's documentation!
 ==========================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 1
 
-Modules
-=======
-
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 9
 
-   modules/modules.rst
+   modules/modules
 
 Indices and tables
 ==================

@@ -5,4 +5,3 @@ hystrix.rolling_number module
     :members:
     :undoc-members:
     :show-inheritance:
-    :exclude-members: EventMetaclass, Event
