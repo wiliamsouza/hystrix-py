@@ -2,6 +2,7 @@ clean:
 	@find . -iname '*.pyc' -delete
 	@find . -iname '*.pyo' -delete
 	@find . -iname '*~' -delete
+	@find . -iname '*.swp' -delete
 	@find . -iname '__pycache__' -delete
 
 cleaneggs:
@@ -9,4 +10,7 @@ cleaneggs:
 	@rm -rf .eggs/
 
 apidoc:
-	sphinx-apidoc -e -o docs/modules/ hystrix/
+	@sphinx-apidoc -e -o docs/modules/ hystrix/
+
+apidocclean:
+	@rm -rf docs/modules/*
