@@ -4,6 +4,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
+# TODO: Rename this to AbstractMetrics
 class Metrics(object):
     """ Base class for metrics
 

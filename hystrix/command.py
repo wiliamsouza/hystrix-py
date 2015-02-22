@@ -9,7 +9,7 @@ import logging
 
 import six
 
-from .group import Group
+from hystrix.group import Group
 
 log = logging.getLogger(__name__)
 

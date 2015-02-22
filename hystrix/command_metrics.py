@@ -4,7 +4,8 @@ import logging
 import six
 
 from hystrix.metrics import Metrics
-from hystrix.rolling_number import RollingNumber
+from hystrix.event_type import EventType
+from hystrix.rolling_number import RollingNumber, RollingNumberEvent
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +55,24 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         counter = RollingNumber(properties.metrics_rolling_statistical_window_in_milliseconds(),
                                 properties.metrics_rolling_statistical_window_buckets())
         super(CommandMetrics, self).__init__(counter)
+        self.command_name = command_name
+        self.command_group = command_group
+        self.event_notifier = event_notifier
+
+    def mark_success(self, duration):
+        """ Mark success incrementing counter and emiting event
+
+        When a :class:`hystrix.command.Command` successfully completes it will
+        call this method to report its success along with how long the
+        execution took.
+
+        Args:
+            duration: Duration
+        """
+
+        # TODO: Why this receive a parameter and do nothing with it?
+        self.event_notifier.mark_event(EventType.SUCCESS, self.command_name)
+        self.counter.increment(RollingNumberEvent.SUCCESS)
 
 
 class HealthCounts(object):

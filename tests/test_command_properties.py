@@ -1,6 +1,7 @@
 from hystrix.command_properties import CommandProperties
 
 
+# TODO: Move this to utils.py file
 # Utility method for creating baseline properties for unit tests.
 def get_unit_test_properties_setter():
     return CommandProperties.setter() \
@@ -25,6 +26,16 @@ def get_unit_test_properties_setter():
         .with_metrics_rolling_percentile_window_buckets(12) \
         .with_metrics_rolling_percentile_bucket_size(1000) \
         .with_metrics_health_snapshot_interval_in_milliseconds(0)
+
+
+# TODO: Move this to utils.py file
+# Return a static representation of the properties with values from the Builder
+# so that UnitTests can create properties that are not affected by the actual
+# implementations which pick up their values dynamically.
+# NOTE: This only work because in CommandProperties the setter override should
+#       take precedence over default_value
+def as_mock(setter):
+    return CommandProperties('TEST', setter, 'unit_test_prefix')
 
 
 class TestPropertiesCommand(CommandProperties):
@@ -68,4 +79,6 @@ def test_integer_code_default():
     setter = CommandProperties.setter()
     properties = TestPropertiesCommand('TEST', setter, 'unitTestPrefix')
 
-    assert CommandProperties.default_metrics_rolling_statistical_window == properties.metrics_rolling_statistical_window_in_milliseconds()
+    result1 = CommandProperties.default_metrics_rolling_statistical_window
+    result2 = properties.metrics_rolling_statistical_window_in_milliseconds()
+    assert result1 == result2
