@@ -32,18 +32,18 @@ def error_percentage():
     metrics = get_metrics(properties)
 
     metrics.mark_success(100)
-    assert 0 == metrics.getHealthCounts().getErrorPercentage()
+    assert 0 == metrics.health_counts().error_percentage()
 
     metrics.markFailure(1000)
-    assert 50 == metrics.getHealthCounts().getErrorPercentage()
+    assert 50 == metrics.health_counts().error_percentage()
 
     metrics.mark_success(100)
     metrics.mark_success(100)
-    assert 25 == metrics.getHealthCounts().getErrorPercentage()
+    assert 25 == metrics.health_counts().error_percentage()
 
     metrics.markTimeout(5000)
     metrics.markTimeout(5000)
-    assert 50 == metrics.getHealthCounts().getErrorPercentage()
+    assert 50 == metrics.health_counts().error_percentage()
 
     metrics.mark_success(100)
     metrics.mark_success(100)
@@ -55,7 +55,7 @@ def error_percentage():
     # 6 success + 1 latent success + 1 failure + 2 timeout = 10 total
     # latent success not considered error
     # error percentage = 1 failure + 2 timeout / 10
-    assert 30 == metrics.getHealthCounts().getErrorPercentage()
+    assert 30 == metrics.health_counts().error_percentage()
 
 
 # Utility method for creating :class:`hystrix.command_metrics.CommandMetrics` for unit tests.

@@ -15,15 +15,12 @@ dev_requires = ['pyflakes', 'pep8', 'pylint', 'check-manifest',
                 'sphinxcontrib-napoleon']
 tests_require = ['pytest-cov', 'pytest-cache', 'pytest-timeout']
 
-PY2 = sys.version_info.major is 2
-PY32 = sys.version_info.major is 3 and sys.version_info.minor is 2
-PY33 = sys.version_info.major is 3 and sys.version_info.minor is 3
-
-if PY2:
+import six
+if six.PY2:
     install_requires.append('futures')
     install_requires.append('enum34')
 
-if PY32 or PY33:
+if six.PY3:
     install_requires.append('enum34')
 
 # Get the long description

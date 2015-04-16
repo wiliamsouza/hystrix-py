@@ -1,11 +1,13 @@
 from __future__ import absolute_import
+from multiprocessing import Value
 import logging
 
 import six
 
 from hystrix.metrics import Metrics
 from hystrix.event_type import EventType
-from hystrix.rolling_number import RollingNumber, RollingNumberEvent
+from hystrix.rolling_number import (RollingNumber, RollingNumberEvent,
+                                    ActualTime)
 
 log = logging.getLogger(__name__)
 
@@ -55,9 +57,14 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         counter = RollingNumber(properties.metrics_rolling_statistical_window_in_milliseconds(),
                                 properties.metrics_rolling_statistical_window_buckets())
         super(CommandMetrics, self).__init__(counter)
+        self.properties = properties
+        self.actual_time = ActualTime()
         self.command_name = command_name
         self.command_group = command_group
         self.event_notifier = event_notifier
+        self.health_counts_snapshot = HealthCounts(0, 0, 0)
+        # TODO: Change this to use github.com/wiliamsouza/atomos
+        self.last_health_counts_snapshot = Value('l', self.actual_time.current_time_in_millis())
 
     def mark_success(self, duration):
         """ Mark success incrementing counter and emiting event
@@ -73,6 +80,42 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         # TODO: Why this receive a parameter and do nothing with it?
         self.event_notifier.mark_event(EventType.SUCCESS, self.command_name)
         self.counter.increment(RollingNumberEvent.SUCCESS)
+
+    def health_counts(self):
+        """ Health counts
+
+        Retrieve a snapshot of total requests, error count and error percentage.
+
+        Returns:
+            instance: :class:`hystrix.command_metrics.HealthCounts`
+         """
+        # we put an interval between snapshots so high-volume commands don't
+        # spend too much unnecessary time calculating metrics in very small time periods
+        last_time = self.last_health_counts_snapshot
+        current_time = ActualTime.current_time_millis()
+        if current_time - last_time >= self.properties.metrics_health_snapshot_interval_in_milliseconds():
+            if self.last_health_counts_snapshot == last_time:
+                with self.last_health_counts_snapshot.get_lock():
+                    self.last_health_counts_snapshot.value = current_time
+                    # Our thread won setting the snapshot time so we will proceed with generating a new snapshot
+                    # losing threads will continue using the old snapshot
+
+                    success = self.counter.rolling_sum(RollingNumberEvent.SUCCESS)
+                    failure = self.counter.rolling_sum(RollingNumberEvent.FAILURE)
+                    timeout = self.counter.rolling_sum(RollingNumberEvent.TIMEOUT)
+                    thread_pool_rejected = self.counter.rolling_sum(RollingNumberEvent.THREAD_POOL_REJECTED)
+                    semaphore_rejected = self.counter.rolling_sum(RollingNumberEvent.SEMAPHORE_REJECTED)
+                    short_circuited = self.counter.rolling_sum(RollingNumberEvent.SHORT_CIRCUITED)
+                    total_count = failure + success + timeout + thread_pool_rejected + short_circuited + semaphore_rejected
+                    error_count = failure + timeout + thread_pool_rejected + short_circuited + semaphore_rejected
+                    error_percentage = 0
+
+                    if total_count > 0:
+                        error_percentage = int(error_count / (total_count * 100))
+
+                    self.health_counts_snapshot = HealthCounts(total_count, error_count, error_percentage)
+
+        return self.health_counts_snapshot
 
 
 class HealthCounts(object):
