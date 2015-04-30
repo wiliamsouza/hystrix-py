@@ -74,12 +74,44 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         execution took.
 
         Args:
-            duration: Duration
+            duration: Command duration
         """
 
         # TODO: Why this receive a parameter and do nothing with it?
         self.event_notifier.mark_event(EventType.SUCCESS, self.command_name)
         self.counter.increment(RollingNumberEvent.SUCCESS)
+
+    def mark_failure(self, duration):
+        """ Mark failure incrementing counter and emiting event
+
+        When a :class:`hystrix.command.Command` fail to completes it will
+        call this method to report its failure along with how long the
+        execution took.
+
+        Args:
+            duration: Command duration
+        """
+
+        # TODO: Why this receive a parameter and do nothing with it?
+        self.event_notifier.mark_event(EventType.FAILURE, self.command_name)
+        self.counter.increment(RollingNumberEvent.FAILURE)
+
+    def mark_timeout(self, duration):
+        """ Mark failure incrementing counter and emiting event
+
+        When a :class:`hystrix.command.Command` times out (fails to complete)
+        it will call this method to report its failure along with how long the
+        command waited (this time should equal or be very close to the timeout
+        value).
+
+        Args:
+            duration: Command duration
+        """
+
+        # TODO: Why this receive a parameter and do nothing with it?
+        self.event_notifier.mark_event(EventType.TIMEOUT, self.command_name)
+        self.counter.increment(RollingNumberEvent.TIMEOUT)
+
 
     def health_counts(self):
         """ Health counts
@@ -91,9 +123,10 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
          """
         # we put an interval between snapshots so high-volume commands don't
         # spend too much unnecessary time calculating metrics in very small time periods
-        last_time = self.last_health_counts_snapshot
-        current_time = ActualTime.current_time_millis()
+        last_time = self.last_health_counts_snapshot.value
+        current_time = ActualTime().current_time_in_millis()
         if current_time - last_time >= self.properties.metrics_health_snapshot_interval_in_milliseconds():
+            # TODO: Change this to something like atomos.compare_and_set()
             if self.last_health_counts_snapshot == last_time:
                 with self.last_health_counts_snapshot.get_lock():
                     self.last_health_counts_snapshot.value = current_time
