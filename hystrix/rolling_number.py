@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from multiprocessing import Value, Lock, RLock
+from multiprocessing import Value, RLock
 from collections import deque
 import logging
 import types
@@ -345,44 +345,38 @@ class Bucket(object):
 class LongAdder(object):
 
     def __init__(self, min_value=0):
-        self.count = Value('i', min_value)
-        # TODO: What is best it or get lock direct from self.count
-        # as described in multiprocessing.Value doc.
-        self.lock = Lock()
+        self._count = Value('i', min_value)
 
     def increment(self):
-        with self.lock:
-            self.count.value += 1
+        with self._count.get_lock():
+            self._count.value += 1
 
     def decrement(self):
-        with self.lock:
-            self.count.value -= 1
+        with self._count.get_lock():
+            self._count.value -= 1
 
     def sum(self):
-        with self.lock:
-            return self.count.value
+        with self._count.get_lock():
+            return self._count.value
 
     def add(self, value):
-        with self.lock:
-            self.count.value += value
+        with self._count.get_lock():
+            self._count.value += value
 
 
 class LongMaxUpdater(object):
 
     def __init__(self, min_value=0):
-        self.count = Value('i', min_value)
-        # TODO: What is best it or get lock direct from self.count
-        # as described in multiprocessing.Value doc.
-        self.lock = Lock()
+        self._count = Value('i', min_value)
 
     def max(self):
-        with self.lock:
-            return self.count.value
+        with self._count.get_lock():
+            return self._count.value
 
     def update(self, value):
         if value > self.max():
-            with self.lock:
-                self.count.value = value
+            with self._count.get_lock():
+                self._count.value = value
 
 
 class CumulativeSum(object):

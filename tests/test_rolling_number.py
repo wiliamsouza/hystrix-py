@@ -100,6 +100,7 @@ def test_increment_in_single_bucket():
     # The count should match
     assert counter.buckets.last().adder(RollingNumberEvent.SUCCESS).sum() == 4
     assert counter.buckets.last().adder(RollingNumberEvent.FAILURE).sum() == 2
+    assert counter.rolling_sum(RollingNumberEvent.FAILURE) == 2
     assert counter.buckets.last().adder(RollingNumberEvent.TIMEOUT).sum() == 1
 
 
