@@ -33,7 +33,6 @@ def test_error_percentage():
     metrics.mark_success(100)
     assert 0 == metrics.health_counts().error_percentage()
 
-    """
     metrics.mark_failure(1000)
     assert 50 == metrics.health_counts().error_percentage()
 
@@ -56,10 +55,9 @@ def test_error_percentage():
     # latent success not considered error
     # error percentage = 1 failure + 2 timeout / 10
     assert 30 == metrics.health_counts().error_percentage()
-    """
 
 
 # Utility method for creating :class:`hystrix.command_metrics.CommandMetrics` for unit tests.
 # TODO: Move this to utils.py file
 def get_metrics(setter):
-    return CommandMetrics('command_name', 'command_group', as_mock(setter), EventNotifierDefault.get_instance())
+    return CommandMetrics('command_test', 'command_test', as_mock(setter), EventNotifierDefault.get_instance())

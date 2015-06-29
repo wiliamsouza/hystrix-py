@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from multiprocessing import Value
+from multiprocessing import Value, Lock
 import logging
 
 import six
@@ -64,7 +64,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         self.event_notifier = event_notifier
         self.health_counts_snapshot = HealthCounts(0, 0, 0)
         # TODO: Change this to use github.com/wiliamsouza/atomos
-        self.last_health_counts_snapshot = Value('l', self.actual_time.current_time_in_millis())
+        self.last_health_counts_snapshot = Value('l', self.actual_time.current_time_in_millis(), lock=Lock())
 
     def mark_success(self, duration):
         """ Mark success incrementing counter and emiting event
@@ -112,7 +112,6 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         self.event_notifier.mark_event(EventType.TIMEOUT, self.command_name)
         self.counter.increment(RollingNumberEvent.TIMEOUT)
 
-
     def health_counts(self):
         """ Health counts
 
@@ -125,12 +124,13 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         # spend too much unnecessary time calculating metrics in very small time periods
         last_time = self.last_health_counts_snapshot.value
         current_time = ActualTime().current_time_in_millis()
-        if current_time - last_time >= self.properties.metrics_health_snapshot_interval_in_milliseconds():
+        if (current_time - last_time) >= self.properties.metrics_health_snapshot_interval_in_milliseconds():
             # TODO: Change this to something like atomos.compare_and_set()
-            if self.last_health_counts_snapshot == last_time:
+            if self.last_health_counts_snapshot.value == last_time:
                 with self.last_health_counts_snapshot.get_lock():
                     self.last_health_counts_snapshot.value = current_time
-                    # Our thread won setting the snapshot time so we will proceed with generating a new snapshot
+                    # Our thread won setting the snapshot time so we will
+                    # proceed with generating a new snapshot
                     # losing threads will continue using the old snapshot
 
                     success = self.counter.rolling_sum(RollingNumberEvent.SUCCESS)
@@ -144,7 +144,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
                     error_percentage = 0
 
                     if total_count > 0:
-                        error_percentage = int(error_count / (total_count * 100))
+                        error_percentage = int(error_count / total_count * 100)
 
                     self.health_counts_snapshot = HealthCounts(total_count, error_count, error_percentage)
 
