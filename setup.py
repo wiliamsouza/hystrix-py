@@ -8,19 +8,23 @@ from setuptools.command.test import test as TestCommand
 
 here = path.abspath(path.dirname(__file__))
 
-setup_requires = ['pytest', 'tox', 'six']
-install_requires = ['six', 'tox']
+setup_requires = ['pytest', 'tox']
+install_requires = ['six', 'tox', 'atomos']
+tests_require = ['six', 'pytest-cov', 'pytest-cache', 'pytest-timeout']
 dev_requires = ['pyflakes', 'pep8', 'pylint', 'check-manifest',
                 'ipython', 'ipdb', 'sphinx', 'sphinx_rtd_theme',
                 'sphinxcontrib-napoleon']
-tests_require = ['pytest-cov', 'pytest-cache', 'pytest-timeout']
+dev_requires.append(tests_require)
 
-import six
-if six.PY2:
+
+PY2 = sys.version_info.major is 2
+PY3 = sys.version_info.major is 3
+
+if PY2:
     install_requires.append('futures')
     install_requires.append('enum34')
 
-if six.PY3:
+if PY3:
     install_requires.append('enum34')
 
 # Get the long description
@@ -58,12 +62,11 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
     keywords='sample setuptools development',
-    packages=find_packages(exclude=['docs', 'tests*']),
+    packages=find_packages(exclude=['docs', 'tests']),
     setup_requires=setup_requires,
     install_requires=install_requires,
     tests_require=tests_require,

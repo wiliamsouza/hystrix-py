@@ -40,7 +40,6 @@ class RollingNumber(object):
     behavior examples.
     """
 
-    # TODO: Change _time to be optional(update all tests:( )
     def __init__(self, milliseconds, bucket_numbers, _time=None):
         self.time = _time or ActualTime()  # Create a instance of time here
         self.milliseconds = milliseconds
@@ -138,6 +137,12 @@ class RollingNumber(object):
 
         # a shortcut to try and get the most common result of immediately
         # finding the current bucket
+
+        # Retrieve the latest bucket if the given time is BEFORE the end of
+        # the bucket window, otherwise it returns None.
+
+        # NOTE: This is thread-safe because it's accessing 'buckets' which is
+        #       a ?LinkedBlockingDeque?
         current_bucket = self.buckets.peek_last()
         if current_bucket is not None and current_time < (current_bucket.window_start + self.buckets_size_in_milliseconds()):
             return current_bucket
@@ -294,7 +299,7 @@ class BucketCircular(deque):
 
 
 class Bucket(object):
-    """ Counters for a given :class:`Bucket` of time
+    """ Counters for a given `bucket` of time
 
     We support both :class:`LongAdder` and :class:`LongMaxUpdater` in a
     :class:`Bucket` but don't want the memory allocation of all types for each
@@ -476,7 +481,7 @@ class EventMetaclass(type):
         return new_class
 
 
-# TODO: Move this to hystri/util/rolling_number_event.py
+# TODO: Move this to hystrix/util/rolling_number_event.py
 class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
     """ Various states/eveents that can be captured in the
     :class:`RollingNumber`.
