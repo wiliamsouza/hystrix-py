@@ -1,17 +1,13 @@
-from multiprocessing import Value, Lock
+from atomos.multiprocessing.atomic import AtomicFloat
 
 
 class MockedTime():
 
     def __init__(self):
-        self._time = Value('f', 0)
-        self._lock = Lock()
+        self._time = AtomicFloat(value=0)
 
     def current_time_in_millis(self):
-        with self._lock:
-            return self._time.value
+        return self._time.get()
 
     def increment(self, millis):
-        with self._lock:
-            self._time.value += millis
-        return self.current_time_in_millis()
+        return self._time.add_and_get(millis)
