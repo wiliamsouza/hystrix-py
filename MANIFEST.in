@@ -1,6 +1,7 @@
 include README.md
 include AUTHORS
 include LICENSE
+include CHANGES.md
 exclude Makefile
 exclude tox.ini
 exclude *.sh
