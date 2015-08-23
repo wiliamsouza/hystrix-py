@@ -28,7 +28,6 @@ def test_manual_command_metrics_name():
     assert commandmetrics.command_metrics_name == 'MyTestCommandMetrics'
 
 
-@pytest.mark.skipif(True, reason='work in progress')
 def test_error_percentage():
     properties = get_unit_test_properties_setter()
     metrics = get_metrics(properties)
@@ -58,6 +57,25 @@ def test_error_percentage():
     # latent success not considered error
     # error percentage = 1 failure + 2 timeout / 10
     assert 30 == metrics.health_counts().error_percentage()
+
+
+def test_bad_request_do_not_affect_error_percentage():
+    properties = get_unit_test_properties_setter()
+    metrics = get_metrics(properties)
+
+    metrics.mark_success(100)
+    assert 0 == metrics.health_counts().error_percentage()
+
+    metrics.mark_failure(1000)
+    assert 50 == metrics.health_counts().error_percentage()
+
+    metrics.mark_bad_request(1)
+    metrics.mark_bad_request(2)
+    assert 50 == metrics.health_counts().error_percentage()
+
+    metrics.mark_failure(45)
+    metrics.mark_failure(55)
+    assert 75 == metrics.health_counts().error_percentage()
 
 
 # Utility method for creating :class:`hystrix.command_metrics.CommandMetrics` for unit tests.

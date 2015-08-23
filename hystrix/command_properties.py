@@ -87,8 +87,8 @@ class CommandProperties(object):
             self._property(
                 self.property_prefix, self.command_key,
                 'circuit_breaker.enabled',
-                setter.circuit_breaker_enabled(),
-                self.default_circuit_breaker_enabled)
+                self.default_circuit_breaker_enabled,
+                setter.circuit_breaker_enabled())
 
         # Number of requests that must be made within a statisticalWindow
         # before open/close decisions are made using stats
@@ -96,32 +96,32 @@ class CommandProperties(object):
             self._property(
                 self.property_prefix, self.command_key,
                 'circuit_breaker.request_volume_threshold',
-                setter.circuit_breaker_request_volume_threshold(),
-                self.default_circuit_breaker_request_volume_threshold)
+                self.default_circuit_breaker_request_volume_threshold,
+                setter.circuit_breaker_request_volume_threshold())
 
         # Milliseconds after tripping circuit before allowing retry
         self._circuit_breaker_sleep_window_in_milliseconds = \
             self._property(
                 self.property_prefix, self.command_key,
                 'circuit_breaker.sleep_window_in_milliseconds',
-                setter.circuit_breaker_sleep_window_in_milliseconds(),
-                self.default_circuit_breaker_sleep_window_in_milliseconds)
+                self.default_circuit_breaker_sleep_window_in_milliseconds,
+                setter.circuit_breaker_sleep_window_in_milliseconds())
 
         # % of 'marks' that must be failed to trip the circuit
         self._circuit_breaker_error_threshold_percentage = \
             self._property(
                 self.property_prefix, self.command_key,
                 'circuit_breaker.error_threshold_percentage',
-                setter.circuit_breaker_error_threshold_percentage(),
-                self.default_circuit_breaker_error_threshold_percentage)
+                self.default_circuit_breaker_error_threshold_percentage,
+                setter.circuit_breaker_error_threshold_percentage())
 
         # A property to allow forcing the circuit open (stopping all requests)
         self._circuit_breaker_force_open = \
             self._property(
                 self.property_prefix, self.command_key,
                 'circuit_breaker.force_open',
-                setter.circuit_breaker_force_open(),
-                self.default_circuit_breaker_force_open)
+                self.default_circuit_breaker_force_open,
+                setter.circuit_breaker_force_open())
 
         # a property to allow ignoring errors and therefore never trip 'open'
         # (ie. allow all traffic through)
@@ -129,24 +129,24 @@ class CommandProperties(object):
             self._property(
                 self.property_prefix, self.command_key,
                 'circuit_breaker.force_closed',
-                setter.circuit_breaker_force_closed(),
-                self.default_circuit_breaker_force_closed)
+                self.default_circuit_breaker_force_closed,
+                setter.circuit_breaker_force_closed())
 
         # Whether a command should be executed in a separate thread or not
         self._execution_isolation_strategy = \
             self._property(
                 self.property_prefix, self.command_key,
                 'execution.isolation.strategy',
-                setter.execution_isolation_strategy(),
-                self.default_execution_isolation_strategy)
+                self.default_execution_isolation_strategy,
+                setter.execution_isolation_strategy())
 
         # Timeout value in milliseconds for a command
         self._execution_timeout_in_milliseconds = \
             self._property(
                 self.property_prefix, self.command_key,
                 'execution.isolation.thread.timeout_in_milliseconds',
-                setter.execution_timeout_in_milliseconds(),
-                self.default_execution_timeout_in_milliseconds)
+                self.default_execution_timeout_in_milliseconds,
+                setter.execution_timeout_in_milliseconds())
 
         # execution_isolation_thread_pool_key_override
 
@@ -155,22 +155,23 @@ class CommandProperties(object):
             self._property(
                 self.property_prefix, self.command_key,
                 'execution.isolation.semaphore.max_concurrent_requests',
-                setter.execution_isolation_semaphore_max_concurrent_requests(),
-                self.default_execution_isolation_semaphore_max_concurrent_requests)
+                self.default_execution_isolation_semaphore_max_concurrent_requests,
+                setter.execution_isolation_semaphore_max_concurrent_requests())
 
         # Number of permits for fallback semaphore
         self._fallback_isolation_semaphore_max_concurrent_requests = \
             self._property(
                 self.property_prefix, self.command_key,
                 'fallback.isolation.semaphore.max_concurrent_requests',
-                setter.fallback_isolation_semaphore_max_concurrent_requests(),
-                self.default_fallback_isolation_semaphore_max_concurrent_requests)
+                self.default_fallback_isolation_semaphore_max_concurrent_requests,
+                setter.fallback_isolation_semaphore_max_concurrent_requests())
 
         # Whether fallback should be attempted
         self._fallback_enabled = \
             self._property(
                 self.property_prefix, self.command_key, 'fallback.enabled',
-                setter.fallback_enabled(), self.default_fallback_enabled)
+                self.default_fallback_enabled,
+                setter.fallback_enabled())
 
         # Whether an underlying Future/Thread
         # (when runInSeparateThread == true) should be interrupted after a
@@ -179,32 +180,32 @@ class CommandProperties(object):
             self._property(
                 self.property_prefix, self.command_key,
                 'execution.isolation.thread.interrupt_on_timeout',
-                setter.execution_isolation_thread_interrupt_on_timeout(),
-                self.default_execution_isolation_thread_interrupt_on_timeout)
+                self.default_execution_isolation_thread_interrupt_on_timeout,
+                setter.execution_isolation_thread_interrupt_on_timeout())
 
         #  Milliseconds back that will be tracked
         self._metrics_rolling_statistical_window_in_milliseconds = \
             self._property(
                 self.property_prefix, self.command_key,
                 'metrics.rolling_stats.time_in_milliseconds',
-                setter.metrics_rolling_statistical_window_in_milliseconds(),
-                self.default_metrics_rolling_statistical_window)
+                self.default_metrics_rolling_statistical_window,
+                setter.metrics_rolling_statistical_window_in_milliseconds())
 
         # number of buckets in the statisticalWindow
         self._metrics_rolling_statistical_window_buckets = \
             self._property(
                 self.property_prefix, self.command_key,
                 'metrics.rolling_stats.num_buckets',
-                setter.metrics_rolling_statistical_window_buckets(),
-                self.default_metrics_rolling_statistical_window_buckets)
+                self.default_metrics_rolling_statistical_window_buckets,
+                setter.metrics_rolling_statistical_window_buckets())
 
         # Whether monitoring should be enabled (SLA and Tracers)
         self._metrics_rolling_percentile_enabled = \
             self._property(
                 self.property_prefix,
                 self.command_key, 'metrics.rolling_percentile.enabled',
-                setter.metrics_rolling_percentile_enabled(),
-                self.default_metrics_rolling_percentile_enabled)
+                self.default_metrics_rolling_percentile_enabled,
+                setter.metrics_rolling_percentile_enabled())
 
         # Number of milliseconds that will be tracked in
         # :class:`hystrix.rolling_percentile.RollingPercentile`
@@ -212,16 +213,16 @@ class CommandProperties(object):
             self._property(
                 self.property_prefix, self.command_key,
                 'metrics.rolling_percentile.time_in_milliseconds',
-                setter.metrics_rolling_percentile_window_in_milliseconds(),
-                self.default_metrics_rolling_percentile_window)
+                self.default_metrics_rolling_percentile_window,
+                setter.metrics_rolling_percentile_window_in_milliseconds())
 
         # Number of buckets percentileWindow will be divided into
         self._metrics_rolling_percentile_window_buckets = \
             self._property(
                 self.property_prefix, self.command_key,
                 'metrics.rolling_percentile.num_buckets',
-                setter.metrics_rolling_percentile_window_buckets(),
-                self.default_metrics_rolling_percentile_window_buckets)
+                self.default_metrics_rolling_percentile_window_buckets,
+                setter.metrics_rolling_percentile_window_buckets())
 
         # How many values will be stored in each
         # :attr:`percentile_window_bucket`
@@ -229,31 +230,31 @@ class CommandProperties(object):
             self._property(
                 self.property_prefix, self.command_key,
                 'metrics.rolling_percentile.bucket_size',
-                setter.metrics_rolling_percentile_bucket_size(),
-                self.default_metrics_rolling_percentile_bucket_size)
+                self.default_metrics_rolling_percentile_bucket_size,
+                setter.metrics_rolling_percentile_bucket_size())
 
         # Time between health snapshots
         self._metrics_health_snapshot_interval_in_milliseconds = \
             self._property(
                 self.property_prefix, self.command_key,
                 'metrics.health_snapshot.interval_in_milliseconds',
-                setter.metrics_health_snapshot_interval_in_milliseconds(),
-                self.default_metrics_health_snapshot_interval_in_milliseconds)
+                self.default_metrics_health_snapshot_interval_in_milliseconds,
+                setter.metrics_health_snapshot_interval_in_milliseconds())
 
         # Whether command request logging is enabled
         self._request_log_enabled = \
             self._property(
                 property_prefix, self.command_key, 'request_log.enabled',
-                setter.request_log_enabled(),
-                self.default_request_log_enabled)
+                self.default_request_log_enabled,
+                setter.request_log_enabled())
 
         # Whether request caching is enabled
         self._request_cache_enabled = \
             self._property(
                 self.property_prefix, self.command_key,
                 'request_cache.enabled',
-                setter.request_cache_enabled(),
-                self.default_request_cache_enabled)
+                self.default_request_cache_enabled,
+                setter.request_cache_enabled())
 
         # threadpool doesn't have a global override, only instance level
         # makes sense
@@ -508,14 +509,16 @@ class CommandProperties(object):
         """
         return self._request_log_enabled
 
-    # TODO: Fix this for now it just return default values
     def _property(self, property_prefix, command_key, instance_property,
-                  setter_override_value, default_value):
+                  default_value, setter_override_value=None):
         """ Get property from a networked plugin
         """
 
         # The setter override should take precedence over default_value
-        return setter_override_value or default_value
+        if setter_override_value is not None:
+            return setter_override_value
+        else:
+            return default_value
 
     @classmethod
     def setter(klass):

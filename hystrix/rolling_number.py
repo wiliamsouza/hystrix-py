@@ -481,7 +481,7 @@ class EventMetaclass(type):
 
 # TODO: Move this to hystrix/util/rolling_number_event.py
 class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
-    """ Various states/eveents that can be captured in the
+    """ Various states/events that can be captured in the
     :class:`RollingNumber`.
 
     Note that events are defined as different types:
@@ -507,6 +507,7 @@ class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
     SHORT_CIRCUITED = 1
     THREAD_POOL_REJECTED = 1
     SEMAPHORE_REJECTED = 1
+    BAD_REQUEST = 1
     FALLBACK_SUCCESS = 1
     FALLBACK_FAILURE = 1
     FALLBACK_REJECTION = 1
