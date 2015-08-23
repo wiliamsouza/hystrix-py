@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-from multiprocessing import Value, Lock
 import logging
 
 import six
+
+from atomos.multiprocessing.atomic import AtomicLong
 
 from hystrix.metrics import Metrics
 from hystrix.event_type import EventType
@@ -62,9 +63,8 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         self.command_name = command_name
         self.command_group = command_group
         self.event_notifier = event_notifier
-        self.health_counts_snapshot = HealthCounts(0, 0, 0)
-        # TODO: Change this to use github.com/wiliamsouza/atomos
-        self.last_health_counts_snapshot = Value('l', self.actual_time.current_time_in_millis(), lock=Lock())
+        self.health_counts_snapshot = None
+        self.last_health_counts_snapshot = AtomicLong(value=self.actual_time.current_time_in_millis())
 
     def mark_success(self, duration):
         """ Mark success incrementing counter and emiting event
@@ -97,7 +97,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         self.counter.increment(RollingNumberEvent.FAILURE)
 
     def mark_timeout(self, duration):
-        """ Mark failure incrementing counter and emiting event
+        """ Mark timeout incrementing counter and emiting event
 
         When a :class:`hystrix.command.Command` times out (fails to complete)
         it will call this method to report its failure along with how long the

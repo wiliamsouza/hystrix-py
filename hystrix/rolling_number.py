@@ -1,11 +1,13 @@
 from __future__ import absolute_import
-from multiprocessing import Value, RLock
+from multiprocessing import RLock
 from collections import deque
 import logging
 import types
 import time
 
 import six
+
+from atomos.multiprocessing.atomic import AtomicLong
 
 log = logging.getLogger(__name__)
 
@@ -347,41 +349,37 @@ class Bucket(object):
         raise Exception('Type is not a LongMaxUpdater.')
 
 
+# TODO: Move this to hystrix/util/long_adder.py
 class LongAdder(object):
 
     def __init__(self, min_value=0):
-        self._count = Value('i', min_value)
+        self._count = AtomicLong(value=min_value)
 
     def increment(self):
-        with self._count.get_lock():
-            self._count.value += 1
+        self._count.add_and_get(1)
 
     def decrement(self):
-        with self._count.get_lock():
-            self._count.value -= 1
+        self._count.subtract_and_get(1)
 
     def sum(self):
-        with self._count.get_lock():
-            return self._count.value
+        return self._count.get()
 
     def add(self, value):
-        with self._count.get_lock():
-            self._count.value += value
+        self._count.add_and_get(value)
 
 
+# TODO: Move this to hystrix/util/long_max_updater.py
 class LongMaxUpdater(object):
 
     def __init__(self, min_value=0):
-        self._count = Value('i', min_value)
+        self._count = AtomicLong(value=min_value)
 
     def max(self):
-        with self._count.get_lock():
-            return self._count.value
+        return self._count.get()
 
     def update(self, value):
         if value > self.max():
-            with self._count.get_lock():
-                self._count.value = value
+            self._count.set(value)
 
 
 class CumulativeSum(object):
