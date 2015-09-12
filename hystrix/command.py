@@ -37,11 +37,10 @@ class CommandMetaclass(type):
         # Properties initialization
         properties_strategy = attrs.get('properties_strategy')
         if properties_strategy is None:
-            properties = CommandProperties(command_key,
-                                           command_properties_defaults)
+            properties_strategy = CommandProperties(
+                command_key, command_properties_defaults)
 
-        # TODO: Check instance CommandProperties here?
-        setattr(new_class, 'properties', properties)
+        setattr(new_class, 'properties', properties_strategy)
 
         # Pool key
         # This defines which pool this command should run on.
@@ -68,7 +67,7 @@ class CommandMetaclass(type):
                 command_metrics_key, (CommandMetrics,),
                 dict(command_metrics_key=command_metrics_key,
                      group_key=group_key, pool_key=pool_key))
-            metrics = NewCommandMetrics(properties=properties)
+            metrics = NewCommandMetrics(properties=properties_strategy)
 
         setattr(new_class, 'metrics', metrics)
 
