@@ -78,7 +78,7 @@ class CommandProperties(object):
     # (error percentage etc)
     default_metrics_health_snapshot_interval_in_milliseconds = 500
 
-    def __init__(self, command_key, setter, property_prefix):
+    def __init__(self, command_key, setter, property_prefix=None):
         self.command_key = command_key
         self.property_prefix = property_prefix
 
@@ -528,8 +528,8 @@ class CommandProperties(object):
     class Setter(object):
         """ Fluent interface that allows chained setting of properties
 
-        That can be passed into a :class:`hystrix.command.Command` constructor to inject instance specific
-        property overrides.
+        That can be passed into a :class:`hystrix.command.Command` constructor
+        to inject instance specific property overrides.
 
         Example::
 
