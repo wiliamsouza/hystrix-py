@@ -53,7 +53,7 @@ class Command(six.with_metaclass(CommandMetaclass, object)):
 
     def execute(self, timeout=None):
         timeout = timeout or self.timeout
-        future = self.group.executor.submit(self.run)
+        future = self.group.pool.submit(self.run)
         try:
             return future.result(timeout)
         except Exception:
@@ -61,13 +61,13 @@ class Command(six.with_metaclass(CommandMetaclass, object)):
             log.info('run raises {}'.format(future.exception))
             try:
                 log.info('trying fallback for {}'.format(self))
-                future = self.group.executor.submit(self.fallback)
+                future = self.group.pool.submit(self.fallback)
                 return future.result(timeout)
             except Exception:
                 log.exception('exception calling fallback for {}'.format(self))
                 log.info('run() raised {}'.format(future.exception))
                 log.info('trying cache for {}'.format(self))
-                future = self.group.executor.submit(self.cache)
+                future = self.group.pool.submit(self.cache)
                 return future.result(timeout)
 
     def observe(self, timeout=None):
@@ -80,7 +80,7 @@ class Command(six.with_metaclass(CommandMetaclass, object)):
 
     def __async(self, timeout=None):
         timeout = timeout or self.timeout
-        future = self.group.executor.submit(self.run)
+        future = self.group.pool.submit(self.run)
         try:
             # Call result() to check for exception
             future.result(timeout)
@@ -90,7 +90,7 @@ class Command(six.with_metaclass(CommandMetaclass, object)):
             log.info('run raised {}'.format(future.exception))
             try:
                 log.info('trying fallback for {}'.format(self))
-                future = self.group.executor.submit(self.fallback)
+                future = self.group.pool.submit(self.fallback)
                 # Call result() to check for exception
                 future.result(timeout)
                 return future
@@ -98,4 +98,4 @@ class Command(six.with_metaclass(CommandMetaclass, object)):
                 log.exception('exception calling fallback for {}'.format(self))
                 log.info('fallback raised {}'.format(future.exception))
                 log.info('trying cache for {}'.format(self))
-                return self.group.executor.submit(self.cache)
+                return self.group.pool.submit(self.cache)

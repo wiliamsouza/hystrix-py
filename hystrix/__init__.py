@@ -4,7 +4,7 @@ import logging
 
 from .command_metrics import CommandMetrics
 from .executor_metrics import ExecutorMetrics
-from .executor import Executor
+from .pool import Pool
 from .command import Command
 from .group import Group
 
