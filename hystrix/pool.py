@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 import logging
 
 import six
@@ -30,7 +30,7 @@ class PoolMetaclass(type):
         return cls.__instances__[pool_key]
 
 
-class Pool(six.with_metaclass(PoolMetaclass, ThreadPoolExecutor)):
+class Pool(six.with_metaclass(PoolMetaclass, ProcessPoolExecutor)):
 
     pool_key = None
 
