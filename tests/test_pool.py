@@ -1,18 +1,18 @@
 from hystrix.pool import Pool
 
 
-def test_default_executorname():
+def test_default_poolname():
     class Test(Pool):
         pass
 
-    executor = Test()
-    assert executor.pool_key == 'TestPool'
+    pool = Test()
+    assert pool.pool_key == 'TestPool'
 
 
-def test_manual_executorname():
+def test_manual_poolname():
     class Test(Pool):
         pool_key = 'MyTestPool'
         pass
 
-    executor = Test()
-    assert executor.pool_key == 'MyTestPool'
+    pool = Test()
+    assert pool.pool_key == 'MyTestPool'

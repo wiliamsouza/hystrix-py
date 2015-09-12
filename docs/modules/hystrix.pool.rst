@@ -1,7 +1,7 @@
-hystrix.executor module
+hystrix.pool module
 =======================
 
-.. automodule:: hystrix.executor
+.. automodule:: hystrix.pool
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,7 +1,7 @@
-hystrix.executor_metrics module
+hystrix.pool_metrics module
 ===============================
 
-.. automodule:: hystrix.executor_metrics
+.. automodule:: hystrix.pool_metrics
     :members:
     :undoc-members:
     :show-inheritance:

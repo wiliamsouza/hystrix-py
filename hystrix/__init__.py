@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 
 from .command_metrics import CommandMetrics
-from .executor_metrics import ExecutorMetrics
+from .pool_metrics import PoolMetrics
 from .pool import Pool
 from .command import Command
 from .group import Group
