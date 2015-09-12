@@ -13,7 +13,8 @@ install_requires = ['six', 'tox']
 dev_requires = ['pyflakes', 'pep8', 'pylint', 'check-manifest',
                 'ipython', 'ipdb', 'sphinx', 'sphinx_rtd_theme',
                 'sphinxcontrib-napoleon']
-tests_require = ['pytest-cov', 'pytest-cache', 'pytest-timeout']
+tests_require = ['pytest-cov', 'pytest-cache', 'pytest-timeout',
+                 'coverage==3.7.1']
 
 PY2 = sys.version_info.major is 2
 PY32 = sys.version_info.major is 3 and sys.version_info.minor is 2
