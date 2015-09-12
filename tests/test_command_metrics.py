@@ -1,8 +1,10 @@
+import time
+
+from hystrix.command import Command
 from hystrix.command_metrics import CommandMetrics
 from hystrix.command_properties import CommandProperties
-from hystrix.strategy.eventnotifier.event_notifier_default import EventNotifierDefault
-
-import pytest
+from hystrix.strategy.eventnotifier.event_notifier_default import (
+    EventNotifierDefault)
 
 from .test_command_properties import get_unit_test_properties_setter, as_mock
 
@@ -11,21 +13,23 @@ properties = CommandProperties('TEST', setter, 'unit_test_prefix')
 event_notifier = EventNotifierDefault.get_instance()
 
 
-def test_default_command_metrics_name():
+def test_default_command_metrics_key():
     class Test(CommandMetrics):
         pass
 
-    commandmetrics = Test('command_name', 'command_group', properties, event_notifier)
-    assert commandmetrics.command_metrics_name == 'TestCommandMetrics'
+    commandmetrics = Test(None, 'command_group', None, properties,
+                          event_notifier)
+    assert commandmetrics.command_metrics_key == 'TestCommandMetrics'
 
 
-def test_manual_command_metrics_name():
+def test_manual_command_metrics_key():
     class Test(CommandMetrics):
-        __command_metrics_name__ = 'MyTestCommandMetrics'
+        command_metrics_key = 'MyTestCommandMetrics'
         pass
 
-    commandmetrics = Test('command_name', 'command_group', properties, event_notifier)
-    assert commandmetrics.command_metrics_name == 'MyTestCommandMetrics'
+    commandmetrics = Test(None, 'command_group', None, properties,
+                          event_notifier)
+    assert commandmetrics.command_metrics_key == 'MyTestCommandMetrics'
 
 
 def test_error_percentage():
@@ -78,7 +82,34 @@ def test_bad_request_do_not_affect_error_percentage():
     assert 75 == metrics.health_counts().error_percentage()
 
 
-# Utility method for creating :class:`hystrix.command_metrics.CommandMetrics` for unit tests.
+"""
+def test_current_concurrent_exection_count():
+    class LatentCommand(Command):
+        def __init__(self, duration):
+            super().__init__(timeout=1000)
+            self.duration = duration
+
+        def run(self):
+            time.sleep(self.duration)
+            return True
+
+        def fallback(self):
+            return False
+
+    metrics = None
+    for _ in range(7):
+        cmd = LatentCommand(400)
+        if metrics is None:
+            metrics = cmd.metrics
+        cmd.queue()
+
+    assert 8 == metrics.current_concurrent_execution_count()
+"""
+
+
 # TODO: Move this to utils.py file
+# Utility method for creating :class:`hystrix.command_metrics.CommandMetrics`
+# for unit tests.
 def get_metrics(setter):
-    return CommandMetrics('command_test', 'command_test', as_mock(setter), EventNotifierDefault.get_instance())
+    return CommandMetrics('command_test', 'command_test', None,
+                          as_mock(setter), EventNotifierDefault.get_instance())

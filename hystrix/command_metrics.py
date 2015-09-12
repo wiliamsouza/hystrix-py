@@ -34,34 +34,36 @@ class CommandMetricsMetaclass(type):
                                                                bases, attrs)
 
         # User defined class name or create a default.
-        class_name = attrs.get('__command_metrics_name__',
-                               '{}CommandMetrics'.format(name))
+        command_metrics_key = attrs.get('command_metrics_key') or \
+            '{}CommandMetrics'.format(name)
 
         # Check for CommandMetrics class instance
-        if class_name not in cls.__instances__:
+        if command_metrics_key not in cls.__instances__:
             new_class = super(CommandMetricsMetaclass, cls).__new__(cls,
-                                                                    class_name,
+                                                                    command_metrics_key,
                                                                     bases,
                                                                     attrs)
-            setattr(new_class, 'command_metrics_name', class_name)
-            cls.__instances__[class_name] = new_class
+            setattr(new_class, 'command_metrics_key', command_metrics_key)
+            cls.__instances__[command_metrics_key] = new_class
 
-        return cls.__instances__[class_name]
+        return cls.__instances__[command_metrics_key]
 
 
 class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
     """ Used by :class:`hystrix.command.Command` to record metrics.
     """
-    __command_metrics_name__ = None
+    command_metrics_key = None
 
-    def __init__(self, command_name, command_group, properties, event_notifier):
-        counter = RollingNumber(properties.metrics_rolling_statistical_window_in_milliseconds(),
-                                properties.metrics_rolling_statistical_window_buckets())
+    # TODO: Review default value None here
+    def __init__(self, command_metrics_key=None, group_key=None,
+                 pool_key=None, properties=None, event_notifier=None):
+        counter = RollingNumber(
+            properties.metrics_rolling_statistical_window_in_milliseconds(),
+            properties.metrics_rolling_statistical_window_buckets())
         super(CommandMetrics, self).__init__(counter)
         self.properties = properties
         self.actual_time = ActualTime()
-        self.command_name = command_name
-        self.command_group = command_group
+        self.group_key = group_key
         self.event_notifier = event_notifier
         self.health_counts_snapshot = None
         self.last_health_counts_snapshot = AtomicLong(value=self.actual_time.current_time_in_millis())
@@ -78,7 +80,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         """
 
         # TODO: Why this receive a parameter and do nothing with it?
-        self.event_notifier.mark_event(EventType.SUCCESS, self.command_name)
+        self.event_notifier.mark_event(EventType.SUCCESS, self.command_metrics_key)
         self.counter.increment(RollingNumberEvent.SUCCESS)
 
     def mark_failure(self, duration):
@@ -93,7 +95,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         """
 
         # TODO: Why this receive a parameter and do nothing with it?
-        self.event_notifier.mark_event(EventType.FAILURE, self.command_name)
+        self.event_notifier.mark_event(EventType.FAILURE, self.command_metrics_key)
         self.counter.increment(RollingNumberEvent.FAILURE)
 
     def mark_timeout(self, duration):
@@ -109,7 +111,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         """
 
         # TODO: Why this receive a parameter and do nothing with it?
-        self.event_notifier.mark_event(EventType.TIMEOUT, self.command_name)
+        self.event_notifier.mark_event(EventType.TIMEOUT, self.command_metrics_key)
         self.counter.increment(RollingNumberEvent.TIMEOUT)
 
     def mark_bad_request(self, duration):
@@ -126,7 +128,7 @@ class CommandMetrics(six.with_metaclass(CommandMetricsMetaclass, Metrics)):
         """
 
         # TODO: Why this receive a parameter and do nothing with it?
-        self.event_notifier.mark_event(EventType.BAD_REQUEST, self.command_name)
+        self.event_notifier.mark_event(EventType.BAD_REQUEST, self.command_metrics_key)
         self.counter.increment(RollingNumberEvent.BAD_REQUEST)
 
     def health_counts(self):
