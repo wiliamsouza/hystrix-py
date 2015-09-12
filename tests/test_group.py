@@ -6,13 +6,13 @@ def test_default_groupname():
         pass
 
     group = Test()
-    assert group.group_name == 'TestGroup'
+    assert group.group_key == 'TestGroup'
 
 
 def test_manual_groupname():
     class Test(Group):
-        __group_name__ = 'MyTestGroup'
+        group_key = 'MyTestGroup'
         pass
 
     group = Test()
-    assert group.group_name == 'MyTestGroup'
+    assert group.group_key == 'MyTestGroup'

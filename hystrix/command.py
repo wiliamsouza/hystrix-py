@@ -19,27 +19,40 @@ class CommandMetaclass(type):
     __blacklist__ = ('Command', 'CommandMetaclass')
 
     def __new__(cls, name, bases, attrs):
-        class_name = attrs.get('__command_name__', None) or name
-        new_class = type.__new__(cls, class_name, bases, attrs)
+        command_key = attrs.get('command_key') or name
+
+        new_class = type.__new__(cls, command_key, bases, attrs)
 
         if name in cls.__blacklist__:
             return new_class
 
-        group_name = attrs.get('__group_name__', '{}Group'.format(class_name))
-        NewGroup = type(group_name, (Group,),
-                        dict(__group_name__=group_name))
+        group_key = attrs.get('group_key') or '{}Group'.format(command_key)
+        NewGroup = type(group_key, (Group,),
+                        dict(group_key=group_key))
+
         setattr(new_class, 'group', NewGroup())
-        setattr(new_class, 'group_name', group_name)
-        setattr(new_class, 'command_name', class_name)
+        setattr(new_class, 'group_key', group_key)
+        setattr(new_class, 'command_key', command_key)
+
+        #metrics = attrs.get('metrics', None)
+        #if metrics is None:
+        #    setattr(new_class, 'metrics', CommandMetrics(command_key,
+        #                                                  group_key,
+        #                                                  pool_key,
+        #                                                  properties))
 
         return new_class
 
 
 class Command(six.with_metaclass(CommandMetaclass, object)):
 
-    __group_name__ = None
+    command_key = None
+    group_key = None
 
-    def __init__(self, timeout=None):
+    def __init__(self, group_key=None, command_key=None,
+                 pool_key=None, circuit_breaker=None, metrics=None,
+                 fallback_semaphore=None, execution_semaphore=None,
+                 properties_strategy=None, execution_hook=None, timeout=None):
         self.timeout = timeout
 
     def run(self):
