@@ -38,15 +38,15 @@ def as_mock(setter):
     return CommandProperties('TEST', setter, 'unit_test_prefix')
 
 
-class TestPropertiesCommand(CommandProperties):
+class PropertiesCommandTest(CommandProperties):
 
     def __init__(self, command_name, setter, property_prefix):
-        super(TestPropertiesCommand, self).__init__(command_name, setter, property_prefix)
+        super(PropertiesCommandTest, self).__init__(command_name, setter, property_prefix)
 
 
 def test_boolean_setter_override1():
     setter = CommandProperties.setter().with_circuit_breaker_force_closed(True)
-    properties = TestPropertiesCommand('TEST', setter, 'unitTestPrefix')
+    properties = PropertiesCommandTest('TEST', setter, 'unitTestPrefix')
 
     # The setter override should take precedence over default_value
     assert True == properties.circuit_breaker_force_closed()
@@ -54,7 +54,7 @@ def test_boolean_setter_override1():
 
 def test_boolean_setter_override2():
     setter = CommandProperties.setter().with_circuit_breaker_force_closed(False)
-    properties = TestPropertiesCommand('TEST', setter, 'unitTestPrefix')
+    properties = PropertiesCommandTest('TEST', setter, 'unitTestPrefix')
 
     # The setter override should take precedence over default
     assert False == properties.circuit_breaker_force_closed()
@@ -62,14 +62,14 @@ def test_boolean_setter_override2():
 
 def test_boolean_code_default():
     setter = CommandProperties.setter()
-    properties = TestPropertiesCommand('TEST', setter, 'unitTestPrefix')
+    properties = PropertiesCommandTest('TEST', setter, 'unitTestPrefix')
 
     assert CommandProperties.default_circuit_breaker_force_closed == properties.circuit_breaker_force_closed()
 
 
 def test_integer_setter_override():
     setter = CommandProperties.setter().with_metrics_rolling_statistical_window_in_milliseconds(5000)
-    properties = TestPropertiesCommand('TEST', setter, 'unitTestPrefix')
+    properties = PropertiesCommandTest('TEST', setter, 'unitTestPrefix')
 
     # The setter override should take precedence over default_value
     assert 5000 == properties.metrics_rolling_statistical_window_in_milliseconds()
@@ -77,7 +77,7 @@ def test_integer_setter_override():
 
 def test_integer_code_default():
     setter = CommandProperties.setter()
-    properties = TestPropertiesCommand('TEST', setter, 'unitTestPrefix')
+    properties = PropertiesCommandTest('TEST', setter, 'unitTestPrefix')
 
     result1 = CommandProperties.default_metrics_rolling_statistical_window
     result2 = properties.metrics_rolling_statistical_window_in_milliseconds()
