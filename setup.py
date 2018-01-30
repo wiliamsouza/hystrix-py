@@ -17,7 +17,6 @@ dev_requires = ['pyflakes', 'pep8', 'pylint', 'check-manifest',
                 'sphinxcontrib-napoleon']
 dev_requires.append(tests_require)
 
-
 PY2 = sys.version_info.major is 2
 PY3 = sys.version_info.major is 3
 
