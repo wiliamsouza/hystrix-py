@@ -1,7 +1,9 @@
 include README.md
 include AUTHORS
 include LICENSE
-include Makefile
-include tox.ini
-recursive-include docs/
-recursive-include tests/
+include CHANGES.md
+exclude Makefile
+exclude tox.ini
+exclude *.sh
+prune docs
+prune tests

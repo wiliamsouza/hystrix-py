@@ -48,16 +48,16 @@ def test_default_groupname():
         pass
 
     command = RunCommand()
-    assert command.group_name == 'RunCommandGroup'
+    assert command.group_key == 'RunCommandGroup'
 
 
 def test_manual_groupname():
     class RunCommand(Command):
-        __group_name__ = 'MyRunGroup'
+        group_key = 'MyRunGroup'
         pass
 
     command = RunCommand()
-    assert command.group_name == 'MyRunGroup'
+    assert command.group_key == 'MyRunGroup'
 
 
 def test_command_hello_synchronous():

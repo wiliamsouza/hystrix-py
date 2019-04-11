@@ -1,0 +1,3 @@
+[report]
+omit =
+   hystrix/__init__.py

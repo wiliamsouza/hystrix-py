@@ -1,11 +1,13 @@
 from __future__ import absolute_import
-from multiprocessing import Value, Lock, RLock
+from multiprocessing import RLock
 from collections import deque
 import logging
 import types
 import time
 
 import six
+
+from atomos.multiprocessing.atomic import AtomicLong
 
 log = logging.getLogger(__name__)
 
@@ -40,9 +42,8 @@ class RollingNumber(object):
     behavior examples.
     """
 
-    # TODO: Change _time to be optional(update all tests:( )
-    def __init__(self, _time, milliseconds, bucket_numbers):
-        self.time = _time
+    def __init__(self, milliseconds, bucket_numbers, _time=None):
+        self.time = _time or ActualTime()  # Create a instance of time here
         self.milliseconds = milliseconds
         self.buckets = BucketCircular(bucket_numbers)
         self.bucket_numbers = bucket_numbers
@@ -138,6 +139,12 @@ class RollingNumber(object):
 
         # a shortcut to try and get the most common result of immediately
         # finding the current bucket
+
+        # Retrieve the latest bucket if the given time is BEFORE the end of
+        # the bucket window, otherwise it returns None.
+
+        # NOTE: This is thread-safe because it's accessing 'buckets' which is
+        #       a ?LinkedBlockingDeque?
         current_bucket = self.buckets.peek_last()
         if current_bucket is not None and current_time < (current_bucket.window_start + self.buckets_size_in_milliseconds()):
             return current_bucket
@@ -294,7 +301,7 @@ class BucketCircular(deque):
 
 
 class Bucket(object):
-    """ Counters for a given :class:`Bucket` of time
+    """ Counters for a given `bucket` of time
 
     We support both :class:`LongAdder` and :class:`LongMaxUpdater` in a
     :class:`Bucket` but don't want the memory allocation of all types for each
@@ -342,47 +349,37 @@ class Bucket(object):
         raise Exception('Type is not a LongMaxUpdater.')
 
 
+# TODO: Move this to hystrix/util/long_adder.py
 class LongAdder(object):
 
     def __init__(self, min_value=0):
-        self.count = Value('i', min_value)
-        # TODO: What is best it or get lock direct from self.count
-        # as described in multiprocessing.Value doc.
-        self.lock = Lock()
+        self._count = AtomicLong(value=min_value)
 
     def increment(self):
-        with self.lock:
-            self.count.value += 1
+        self._count.add_and_get(1)
 
     def decrement(self):
-        with self.lock:
-            self.count.value -= 1
+        self._count.subtract_and_get(1)
 
     def sum(self):
-        with self.lock:
-            return self.count.value
+        return self._count.get()
 
     def add(self, value):
-        with self.lock:
-            self.count.value += value
+        self._count.add_and_get(value)
 
 
+# TODO: Move this to hystrix/util/long_max_updater.py
 class LongMaxUpdater(object):
 
     def __init__(self, min_value=0):
-        self.count = Value('i', min_value)
-        # TODO: What is best it or get lock direct from self.count
-        # as described in multiprocessing.Value doc.
-        self.lock = Lock()
+        self._count = AtomicLong(value=min_value)
 
     def max(self):
-        with self.lock:
-            return self.count.value
+        return self._count.get()
 
     def update(self, value):
         if value > self.max():
-            with self.lock:
-                self.count.value = value
+            self._count.set(value)
 
 
 class CumulativeSum(object):
@@ -482,8 +479,9 @@ class EventMetaclass(type):
         return new_class
 
 
+# TODO: Move this to hystrix/util/rolling_number_event.py
 class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
-    """ Various states/eveents that can be captured in the
+    """ Various states/events that can be captured in the
     :class:`RollingNumber`.
 
     Note that events are defined as different types:
@@ -509,6 +507,7 @@ class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
     SHORT_CIRCUITED = 1
     THREAD_POOL_REJECTED = 1
     SEMAPHORE_REJECTED = 1
+    BAD_REQUEST = 1
     FALLBACK_SUCCESS = 1
     FALLBACK_FAILURE = 1
     FALLBACK_REJECTION = 1
@@ -538,3 +537,16 @@ class RollingNumberEvent(six.with_metaclass(EventMetaclass, object)):
                 it returns ``False`` .
         """
         return self._event.value == 2
+
+
+class ActualTime(object):
+    """ Actual time
+    """
+
+    def current_time_in_millis(self):
+        """ Current time in milliseconds
+
+        Returns:
+            int: Returns :func:`time.time()` converted to milliseconds
+        """
+        return int(round(time.time() * 1000))

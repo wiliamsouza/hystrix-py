@@ -6,8 +6,8 @@ from hystrix.rolling_number import RollingNumber, RollingNumberEvent
 
 
 def test_create_buckets():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # confirm the initial settings
     assert counter.milliseconds == 200
@@ -21,7 +21,7 @@ def test_create_buckets():
     # being created with 1 success in each
     for r in range(counter.bucket_numbers):
         counter.increment(RollingNumberEvent.SUCCESS)
-        time.increment(counter.buckets_size_in_milliseconds())
+        _time.increment(counter.buckets_size_in_milliseconds())
 
     # confirm we have all 10 buckets
     assert counter.buckets.size == 10
@@ -32,8 +32,8 @@ def test_create_buckets():
 
 
 def test_reset_buckets():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -56,8 +56,8 @@ def test_reset_buckets():
 
 
 def test_empty_buckets_fill_in():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -69,7 +69,7 @@ def test_empty_buckets_fill_in():
     assert counter.buckets.size == 1
 
     # Wait past 3 bucket time periods (the 1st bucket then 2 empty ones)
-    time.increment(counter.buckets_size_in_milliseconds() * 3)
+    _time.increment(counter.buckets_size_in_milliseconds() * 3)
 
     # Add another
     counter.increment(RollingNumberEvent.SUCCESS)
@@ -79,8 +79,8 @@ def test_empty_buckets_fill_in():
 
 
 def test_increment_in_single_bucket():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -100,12 +100,13 @@ def test_increment_in_single_bucket():
     # The count should match
     assert counter.buckets.last().adder(RollingNumberEvent.SUCCESS).sum() == 4
     assert counter.buckets.last().adder(RollingNumberEvent.FAILURE).sum() == 2
+    assert counter.rolling_sum(RollingNumberEvent.FAILURE) == 2
     assert counter.buckets.last().adder(RollingNumberEvent.TIMEOUT).sum() == 1
 
 
 def test_increment_in_multiple_buckets():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -122,7 +123,7 @@ def test_increment_in_multiple_buckets():
     counter.increment(RollingNumberEvent.SHORT_CIRCUITED)
 
     # Sleep to get to a new bucket
-    time.increment(counter.buckets_size_in_milliseconds() * 3)
+    _time.increment(counter.buckets_size_in_milliseconds() * 3)
 
     # Increment
     counter.increment(RollingNumberEvent.SUCCESS)
@@ -149,7 +150,7 @@ def test_increment_in_multiple_buckets():
     assert counter.rolling_sum(RollingNumberEvent.SHORT_CIRCUITED) == 2
 
     # Wait until window passes
-    time.increment(counter.milliseconds)
+    _time.increment(counter.milliseconds)
 
     # Increment
     counter.increment(RollingNumberEvent.SUCCESS)
@@ -211,8 +212,8 @@ def test_response_from_cache():
 
 
 def test_counter_retrieval_refreshes_buckets():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -226,7 +227,7 @@ def test_counter_retrieval_refreshes_buckets():
     counter.increment(RollingNumberEvent.FAILURE)
 
     # Sleep to get to a new bucketV
-    time.increment(counter.buckets_size_in_milliseconds() * 3)
+    _time.increment(counter.buckets_size_in_milliseconds() * 3)
 
     # We should have 1 bucket since nothing has triggered the update of
     # buckets in the elapsed time
@@ -241,7 +242,7 @@ def test_counter_retrieval_refreshes_buckets():
     assert counter.buckets.size == 4
 
     # Wait until window passes
-    time.increment(counter.milliseconds)
+    _time.increment(counter.milliseconds)
 
     # The total counts should all be 0 (and the buckets cleared by the get,
     #not only increment)
@@ -258,8 +259,8 @@ def test_counter_retrieval_refreshes_buckets():
 
 
 def test_update_max_1():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -275,7 +276,7 @@ def test_update_max_1():
     assert counter.rolling_max(RollingNumberEvent.THREAD_MAX_ACTIVE) == 10
 
     # Sleep to get to a new bucket
-    time.increment(counter.buckets_size_in_milliseconds() * 3)
+    _time.increment(counter.buckets_size_in_milliseconds() * 3)
 
     # Increment again is latest bucket
     counter.update_rolling_max(RollingNumberEvent.THREAD_MAX_ACTIVE, 20)
@@ -295,8 +296,8 @@ def test_update_max_1():
 
 
 def test_update_max_2():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -314,7 +315,7 @@ def test_update_max_2():
     assert counter.rolling_max(RollingNumberEvent.THREAD_MAX_ACTIVE) == 30
 
     # Sleep to get to a new bucket
-    time.increment(counter.buckets_size_in_milliseconds() * 3)
+    _time.increment(counter.buckets_size_in_milliseconds() * 3)
 
     # Increment again is latest bucket
     counter.update_rolling_max(RollingNumberEvent.THREAD_MAX_ACTIVE, 30)
@@ -337,8 +338,8 @@ def test_update_max_2():
 
 
 def test_max_value():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
     # TODO: Change tests to use this aproache for events
     event = RollingNumberEvent.THREAD_MAX_ACTIVE
 
@@ -349,19 +350,19 @@ def test_max_value():
     counter.update_rolling_max(event, 10)
 
     # Sleep to get to a new bucket
-    time.increment(counter.buckets_size_in_milliseconds())
+    _time.increment(counter.buckets_size_in_milliseconds())
 
     # Increment
     counter.update_rolling_max(event, 30)
 
     # Sleep to get to a new bucket
-    time.increment(counter.buckets_size_in_milliseconds())
+    _time.increment(counter.buckets_size_in_milliseconds())
 
     # Increment
     counter.update_rolling_max(event, 40)
 
     # Sleep to get to a new bucket
-    time.increment(counter.buckets_size_in_milliseconds())
+    _time.increment(counter.buckets_size_in_milliseconds())
 
     # Try Decrement
     counter.update_rolling_max(event, 15)
@@ -371,29 +372,29 @@ def test_max_value():
 
 
 def test_empty_sum():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
     event = RollingNumberEvent.COLLAPSED
     assert counter.rolling_sum(event) == 0
 
 
 def test_empty_max():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
     event = RollingNumberEvent.THREAD_MAX_ACTIVE
     assert counter.rolling_max(event) == 0
 
 
 def test_empty_latest_value():
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
     event = RollingNumberEvent.THREAD_MAX_ACTIVE
     assert counter.value_of_latest_bucket(event) == 0
 
 
 def test_rolling():
-    time = MockedTime()
-    counter = RollingNumber(time, 20, 2)
+    _time = MockedTime()
+    counter = RollingNumber(20, 2, _time=_time)
     event = RollingNumberEvent.THREAD_MAX_ACTIVE
 
     assert counter.cumulative_sum(event) == 0
@@ -401,7 +402,7 @@ def test_rolling():
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
         counter.current_bucket()
-        time.increment(counter.buckets_size_in_milliseconds())
+        _time.increment(counter.buckets_size_in_milliseconds())
 
         assert len(counter.values(event)) == 2
 
@@ -409,8 +410,8 @@ def test_rolling():
 
 
 def test_cumulative_counter_after_rolling():
-    time = MockedTime()
-    counter = RollingNumber(time, 20, 2)
+    _time = MockedTime()
+    counter = RollingNumber(20, 2, _time=_time)
     event = RollingNumberEvent.SUCCESS
 
     assert counter.cumulative_sum(event) == 0
@@ -418,7 +419,7 @@ def test_cumulative_counter_after_rolling():
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
         counter.increment(event)
-        time.increment(counter.buckets_size_in_milliseconds())
+        _time.increment(counter.buckets_size_in_milliseconds())
 
         assert len(counter.values(event)) == 2
 
@@ -430,8 +431,8 @@ def test_cumulative_counter_after_rolling():
 
 
 def test_cumulative_counter_after_rolling_and_reset():
-    time = MockedTime()
-    counter = RollingNumber(time, 20, 2)
+    _time = MockedTime()
+    counter = RollingNumber(20, 2, _time=_time)
     event = RollingNumberEvent.SUCCESS
 
     assert counter.cumulative_sum(event) == 0
@@ -439,7 +440,7 @@ def test_cumulative_counter_after_rolling_and_reset():
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
         counter.increment(event)
-        time.increment(counter.buckets_size_in_milliseconds())
+        _time.increment(counter.buckets_size_in_milliseconds())
 
         assert len(counter.values(event)) == 2
 
@@ -456,8 +457,8 @@ def test_cumulative_counter_after_rolling_and_reset():
 
 
 def test_cumulative_counter_after_rolling_and_reset2():
-    time = MockedTime()
-    counter = RollingNumber(time, 20, 2)
+    _time = MockedTime()
+    counter = RollingNumber(20, 2, _time=_time)
     event = RollingNumberEvent.SUCCESS
 
     assert counter.cumulative_sum(event) == 0
@@ -468,7 +469,7 @@ def test_cumulative_counter_after_rolling_and_reset2():
 
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
-        time.increment(counter.buckets_size_in_milliseconds())
+        _time.increment(counter.buckets_size_in_milliseconds())
 
         # simulate a reset occurring every once in a while
         # so we ensure the absolute sum is handling it okay
@@ -484,8 +485,8 @@ def test_cumulative_counter_after_rolling_and_reset2():
 
 
 def test_cumulative_counter_after_rolling_and_reset3():
-    time = MockedTime()
-    counter = RollingNumber(time, 20, 2)
+    _time = MockedTime()
+    counter = RollingNumber(20, 2, _time=_time)
     event = RollingNumberEvent.SUCCESS
 
     assert counter.cumulative_sum(event) == 0
@@ -496,7 +497,7 @@ def test_cumulative_counter_after_rolling_and_reset3():
 
     # Iterate over 20 buckets on a queue sized for 2
     for i in range(20):
-        time.increment(counter.buckets_size_in_milliseconds())
+        _time.increment(counter.buckets_size_in_milliseconds())
 
     # Since we are rolling over the buckets it should reset naturally
 
@@ -509,10 +510,10 @@ def test_cumulative_counter_after_rolling_and_reset3():
 
 
 def test_milliseconds_buckets_size_error():
-    time = MockedTime()
+    _time = MockedTime()
 
     with pytest.raises(Exception):
-        RollingNumber(time, 100, 11)
+        RollingNumber(100, 11, _time=_time)
 
 
 def test_rolling_number_event_is_counter():
@@ -526,8 +527,8 @@ def test_rolling_number_event_is_max_updater():
 
 
 def counter_event(event):
-    time = MockedTime()
-    counter = RollingNumber(time, 200, 10)
+    _time = MockedTime()
+    counter = RollingNumber(200, 10, _time=_time)
 
     # We start out with 0 buckets in the queue
     assert counter.buckets.size == 0
@@ -546,7 +547,7 @@ def counter_event(event):
     assert counter.rolling_sum(event) == 1
 
     # Sleep to get to a new bucket
-    time.increment(counter.buckets_size_in_milliseconds() * 3)
+    _time.increment(counter.buckets_size_in_milliseconds() * 3)
 
     # Incremenet again in latest bucket
     counter.increment(event)

@@ -1,35 +1,18 @@
-from hystrix.metrics import CommandMetrics, ExecutorMetrics
+from hystrix.metrics import Metrics
+from hystrix.command_properties import CommandProperties
+from hystrix.rolling_number import RollingNumber, RollingNumberEvent
+
+setter = CommandProperties.setter()
+properties = CommandProperties('TEST', setter, 'unit_test_prefix')
+counter = RollingNumber(properties.metrics_rolling_statistical_window_in_milliseconds(),
+                        properties.metrics_rolling_statistical_window_buckets())
 
 
-def test_default_command_metrics_name():
-    class Test(CommandMetrics):
-        pass
-
-    commandmetrics = Test()
-    assert commandmetrics.command_metrics_name == 'TestCommandMetrics'
+def test_metrics_cumulative_count():
+    metrics = Metrics(counter)
+    assert metrics.cumulative_count(RollingNumberEvent.THREAD_MAX_ACTIVE) == 0
 
 
-def test_manual_command_metrics_name():
-    class Test(CommandMetrics):
-        __command_metrics_name__ = 'MyTestCommandMetrics'
-        pass
-
-    commandmetrics = Test()
-    assert commandmetrics.command_metrics_name == 'MyTestCommandMetrics'
-
-
-def test_default_executor_metrics_name():
-    class Test(ExecutorMetrics):
-        pass
-
-    executormetrics = Test()
-    assert executormetrics.executor_metrics_name == 'TestExecutorMetrics'
-
-
-def test_manual_executor_metrics_name():
-    class Test(ExecutorMetrics):
-        __executor_metrics_name__ = 'MyTestExecutorMetrics'
-        pass
-
-    executormetrics = Test()
-    assert executormetrics.executor_metrics_name == 'MyTestExecutorMetrics'
+def test_metrics_rolling_count():
+    metrics = Metrics(counter)
+    assert metrics.rolling_count(RollingNumberEvent.SUCCESS) == 0
